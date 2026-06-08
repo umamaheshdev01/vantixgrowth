@@ -36,16 +36,22 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 async function fetchProfile(accessToken: string): Promise<User | null> {
-  try {
-    const res = await fetch('/api/auth/me', {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    })
-    if (!res.ok) return null
-    const json = await res.json()
-    return (json.data as User) ?? null
-  } catch {
-    return null
+  const res = await fetch('/api/auth/me', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+
+  // 5xx = backend/infra problem (DB or Supabase unreachable). Surface the real
+  // reason instead of masking it as "account not set up".
+  if (res.status >= 500) {
+    const json = await res.json().catch(() => null)
+    throw new Error(
+      json?.error ?? 'The server is temporarily unavailable. Please try again shortly.',
+    )
   }
+
+  if (!res.ok) return null // 401/403 — token valid but no matching app user
+  const json = await res.json()
+  return (json.data as User) ?? null
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -67,10 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return Promise.resolve()
     }
 
-    return fetchProfile(next.access_token).then((profile) => {
-      if (requestId !== profileRequestId.current) return
-      setUser(profile)
-    })
+    return fetchProfile(next.access_token)
+      .then((profile) => {
+        if (requestId !== profileRequestId.current) return
+        setUser(profile)
+      })
+      .catch((err) => {
+        // Infra error during background sync — keep the user logged out rather
+        // than crashing the provider. login() surfaces the message explicitly.
+        if (requestId !== profileRequestId.current) return
+        console.error('[auth] profile sync failed:', err)
+        setUser(null)
+      })
   }, [])
 
   useEffect(() => {

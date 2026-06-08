@@ -33,3 +33,6 @@ export const validationError = (errors: Record<string, string>) =>
 
 export const serverError = (msg = 'Internal server error') =>
   NextResponse.json({ success: false, data: null, error: msg }, { status: 500 })
+
+export const serviceUnavailable = (msg = 'Service temporarily unavailable') =>
+  NextResponse.json({ success: false, data: null, error: msg }, { status: 503 })
