@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { getAccessTokenSync } from '@/lib/auth-token'
 
 export type ApiResponse<T> = {
   success: boolean
@@ -9,6 +10,9 @@ export type ApiResponse<T> = {
 }
 
 async function getAccessToken(): Promise<string | null> {
+  const cached = getAccessTokenSync()
+  if (cached) return cached
+
   const { data: { session } } = await supabase.auth.getSession()
   return session?.access_token ?? null
 }

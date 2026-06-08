@@ -7,16 +7,16 @@ import Sidebar from '@/components/layout/Sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { session, loading } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
-    if (!loading && !session) {
+    if (!loading && !user) {
       router.replace('/login')
     }
-  }, [session, loading, router])
+  }, [user, loading, router])
 
-  if (loading || !session) {
+  if (loading || !user) {
     return (
       <div className="flex h-screen bg-background">
         <Skeleton className="hidden md:block w-14 lg:w-60 h-full rounded-none shrink-0" />

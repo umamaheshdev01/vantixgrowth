@@ -1,9 +1,18 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  ReactNode,
+} from 'react'
 import { Session } from '@supabase/supabase-js'
 import { Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { setAccessToken } from '@/lib/auth-token'
 
 type Role = 'admin' | 'employee'
 type Status = 'active' | 'inactive'
@@ -43,43 +52,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
+  const profileRequestId = useRef(0)
+
+  const applySession = useCallback((next: Session | null) => {
+    setSession(next)
+    setAccessToken(next?.access_token ?? null)
+  }, [])
+
+  const syncProfile = useCallback((next: Session | null) => {
+    const requestId = ++profileRequestId.current
+
+    if (!next?.access_token) {
+      setUser(null)
+      return Promise.resolve()
+    }
+
+    return fetchProfile(next.access_token).then((profile) => {
+      if (requestId !== profileRequestId.current) return
+      setUser(profile)
+    })
+  }, [])
 
   useEffect(() => {
-    // Hydrate session on mount
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      if (session?.access_token) {
-        const profile = await fetchProfile(session.access_token)
-        setUser(profile)
-      }
+    let mounted = true
+
+    supabase.auth.getSession().then(async ({ data: { session: initial } }) => {
+      if (!mounted) return
+      applySession(initial)
+      await syncProfile(initial)
       setLoading(false)
     })
 
-    // Keep auth state in sync
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      if (session?.access_token) {
-        const profile = await fetchProfile(session.access_token)
-        setUser(profile)
-      } else {
-        setUser(null)
-      }
+    } = supabase.auth.onAuthStateChange((_event, next) => {
+      // Defer async work — awaiting inside this callback can deadlock getSession().
+      setTimeout(() => {
+        if (!mounted) return
+        applySession(next)
+        void syncProfile(next).finally(() => setLoading(false))
+      }, 0)
     })
 
-    return () => subscription.unsubscribe()
-  }, [])
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+    }
+  }, [applySession, syncProfile])
 
   const login = async (email: string, password: string): Promise<void> => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw error
+
+    const next = data.session
+    if (!next?.access_token) throw new Error('Sign-in succeeded but no session was returned')
+
+    applySession(next)
+    const profile = await fetchProfile(next.access_token)
+    if (!profile) {
+      await supabase.auth.signOut()
+      applySession(null)
+      setUser(null)
+      throw new Error(
+        'Your login is valid but this account is not set up in the dashboard. Contact an admin.',
+      )
+    }
+
+    setUser(profile)
   }
 
   const logout = async (): Promise<void> => {
     await supabase.auth.signOut()
+    applySession(null)
     setUser(null)
-    setSession(null)
   }
 
   if (loading) {

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { Eye, EyeOff, Loader2, AlertCircle } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -29,15 +28,16 @@ function toFriendlyError(msg: string): string {
 
 export default function LoginPage() {
   const router = useRouter()
-  const { session } = useAuth()
+  const { user, login } = useAuth()
   const { toast } = useToast()
   const [showPassword, setShowPassword] = useState(false)
   const [apiError, setApiError] = useState('')
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (session) router.replace('/dashboard')
-  }, [session, router])
+    if (!user) return
+    router.replace(user.role === 'admin' ? '/dashboard' : '/videos')
+  }, [user, router])
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormValues>()
 
@@ -45,12 +45,11 @@ export default function LoginPage() {
     setLoading(true)
     setApiError('')
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) {
-        const msg = toFriendlyError(error.message)
-        setApiError(msg)
-        toast({ title: 'Sign in failed', description: msg, variant: 'destructive' })
-      }
+      await login(email, password)
+    } catch (err) {
+      const msg = toFriendlyError(err instanceof Error ? err.message : 'Sign in failed')
+      setApiError(msg)
+      toast({ title: 'Sign in failed', description: msg, variant: 'destructive' })
     } finally {
       setLoading(false)
     }

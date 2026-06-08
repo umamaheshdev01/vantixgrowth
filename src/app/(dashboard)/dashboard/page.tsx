@@ -39,6 +39,7 @@ import {
 } from '@/components/ui/table'
 import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/context/AuthContext'
 
 function getGreeting(): string {
   const h = new Date().getHours()
@@ -473,12 +474,15 @@ function RecentFinance() {
 }
 
 function DashboardContent() {
+  const { user } = useAuth()
+  const firstName = user?.name?.split(' ')[0] ?? 'there'
+
   return (
     <div className="space-y-8 animate-in">
       <div>
         <p className="text-sm text-muted-foreground mb-1">{getFormattedDate()}</p>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
-          {getGreeting()}, Rajaharsha
+          {getGreeting()}, {firstName}
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5">
           Here&apos;s what&apos;s happening with your business today.
