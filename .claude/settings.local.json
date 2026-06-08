@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(npm install *)",
-      "WebFetch(domain:neon.com)"
+      "WebFetch(domain:neon.com)",
+      "mcp__supabase__execute_sql"
     ]
   }
 }

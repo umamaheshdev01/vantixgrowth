@@ -1,17 +1,11 @@
 {
-  "/api/employees/route": "app/api/employees/route.js",
-  "/api/clients/route": "app/api/clients/route.js",
-  "/api/videos/[id]/history/route": "app/api/videos/[id]/history/route.js",
-  "/api/videos/[id]/route": "app/api/videos/[id]/route.js",
-  "/api/videos/[id]/activity/route": "app/api/videos/[id]/activity/route.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
-  "/api/videos/mine/route": "app/api/videos/mine/route.js",
+  "/api/clients/route": "app/api/clients/route.js",
+  "/api/employees/route": "app/api/employees/route.js",
   "/api/videos/route": "app/api/videos/route.js",
-  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(dashboard)/videos/page": "app/(dashboard)/videos/page.js",
-  "/(dashboard)/videos/[id]/page": "app/(dashboard)/videos/[id]/page.js",
-  "/(dashboard)/finance/page": "app/(dashboard)/finance/page.js",
   "/(dashboard)/clients/page": "app/(dashboard)/clients/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/videos/[id]/page": "app/(dashboard)/videos/[id]/page.js",
+  "/(dashboard)/videos/page": "app/(dashboard)/videos/page.js",
   "/(dashboard)/employees/page": "app/(dashboard)/employees/page.js"
 }

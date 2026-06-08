@@ -106,7 +106,7 @@ eval("__webpack_require__.a(module, async (__webpack_handle_async_dependencies__
 /***/ ((module, __webpack_exports__, __webpack_require__) => {
 
 "use strict";
-eval("__webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {\n__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   prisma: () => (/* binding */ prisma)\n/* harmony export */ });\n/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! dotenv/config */ \"(rsc)/./node_modules/dotenv/config.js\");\n/* harmony import */ var dotenv_config__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(dotenv_config__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var pg__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! pg */ \"pg\");\n/* harmony import */ var _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! @prisma/adapter-pg */ \"@prisma/adapter-pg\");\n/* harmony import */ var _generated_prisma_client__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../../generated/prisma/client */ \"(rsc)/./generated/prisma/client.ts\");\nvar __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([pg__WEBPACK_IMPORTED_MODULE_1__, _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_2__]);\n([pg__WEBPACK_IMPORTED_MODULE_1__, _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_2__] = __webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);\n\n\n\n\nconst globalForPrisma = globalThis;\nfunction makeClient() {\n    const pool = new pg__WEBPACK_IMPORTED_MODULE_1__.Pool({\n        connectionString: process.env.DATABASE_URL\n    });\n    const adapter = new _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_2__.PrismaPg(pool);\n    return new _generated_prisma_client__WEBPACK_IMPORTED_MODULE_3__.PrismaClient({\n        adapter\n    });\n}\nconst prisma = globalForPrisma.prisma ?? makeClient();\nif (true) {\n    globalForPrisma.prisma = prisma;\n}\n\n__webpack_async_result__();\n} catch(e) { __webpack_async_result__(e); } });//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9zcmMvbGliL3ByaXNtYS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7Ozs7QUFBc0I7QUFDRztBQUNvQjtBQUNlO0FBRTVELE1BQU1HLGtCQUFrQkM7QUFFeEIsU0FBU0M7SUFDUCxNQUFNQyxPQUFPLElBQUlOLG9DQUFJQSxDQUFDO1FBQUVPLGtCQUFrQkMsUUFBUUMsR0FBRyxDQUFDQyxZQUFZO0lBQUU7SUFDcEUsTUFBTUMsVUFBVSxJQUFJVix3REFBUUEsQ0FBQ0s7SUFDN0IsT0FBTyxJQUFJSixrRUFBWUEsQ0FBQztRQUFFUztJQUFRO0FBQ3BDO0FBRU8sTUFBTUMsU0FBdUJULGdCQUFnQlMsTUFBTSxJQUFJUCxhQUFZO0FBRTFFLElBQUlHLElBQXFDLEVBQUU7SUFDekNMLGdCQUFnQlMsTUFBTSxHQUFHQTtBQUMzQiIsInNvdXJjZXMiOlsiL1VzZXJzL3VtYW1haGVzaC9EZXNrdG9wL3ZhbnRpeCBkYXNoYm9hcmQvc3JjL2xpYi9wcmlzbWEudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0ICdkb3RlbnYvY29uZmlnJ1xuaW1wb3J0IHsgUG9vbCB9IGZyb20gJ3BnJ1xuaW1wb3J0IHsgUHJpc21hUGcgfSBmcm9tICdAcHJpc21hL2FkYXB0ZXItcGcnXG5pbXBvcnQgeyBQcmlzbWFDbGllbnQgfSBmcm9tICcuLi8uLi9nZW5lcmF0ZWQvcHJpc21hL2NsaWVudCdcblxuY29uc3QgZ2xvYmFsRm9yUHJpc21hID0gZ2xvYmFsVGhpcyBhcyB1bmtub3duIGFzIHsgcHJpc21hOiBQcmlzbWFDbGllbnQgfVxuXG5mdW5jdGlvbiBtYWtlQ2xpZW50KCk6IFByaXNtYUNsaWVudCB7XG4gIGNvbnN0IHBvb2wgPSBuZXcgUG9vbCh7IGNvbm5lY3Rpb25TdHJpbmc6IHByb2Nlc3MuZW52LkRBVEFCQVNFX1VSTCEgfSlcbiAgY29uc3QgYWRhcHRlciA9IG5ldyBQcmlzbWFQZyhwb29sKVxuICByZXR1cm4gbmV3IFByaXNtYUNsaWVudCh7IGFkYXB0ZXIgfSBhcyBhbnkpXG59XG5cbmV4cG9ydCBjb25zdCBwcmlzbWE6IFByaXNtYUNsaWVudCA9IGdsb2JhbEZvclByaXNtYS5wcmlzbWEgPz8gbWFrZUNsaWVudCgpXG5cbmlmIChwcm9jZXNzLmVudi5OT0RFX0VOViAhPT0gJ3Byb2R1Y3Rpb24nKSB7XG4gIGdsb2JhbEZvclByaXNtYS5wcmlzbWEgPSBwcmlzbWFcbn1cbiJdLCJuYW1lcyI6WyJQb29sIiwiUHJpc21hUGciLCJQcmlzbWFDbGllbnQiLCJnbG9iYWxGb3JQcmlzbWEiLCJnbG9iYWxUaGlzIiwibWFrZUNsaWVudCIsInBvb2wiLCJjb25uZWN0aW9uU3RyaW5nIiwicHJvY2VzcyIsImVudiIsIkRBVEFCQVNFX1VSTCIsImFkYXB0ZXIiLCJwcmlzbWEiXSwiaWdub3JlTGlzdCI6W10sInNvdXJjZVJvb3QiOiIifQ==\n//# sourceURL=webpack-internal:///(rsc)/./src/lib/prisma.ts\n");
+eval("__webpack_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {\n__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   prisma: () => (/* binding */ prisma)\n/* harmony export */ });\n/* harmony import */ var pg__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! pg */ \"pg\");\n/* harmony import */ var _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @prisma/adapter-pg */ \"@prisma/adapter-pg\");\n/* harmony import */ var _generated_prisma_client__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../../generated/prisma/client */ \"(rsc)/./generated/prisma/client.ts\");\nvar __webpack_async_dependencies__ = __webpack_handle_async_dependencies__([pg__WEBPACK_IMPORTED_MODULE_0__, _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_1__]);\n([pg__WEBPACK_IMPORTED_MODULE_0__, _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_1__] = __webpack_async_dependencies__.then ? (await __webpack_async_dependencies__)() : __webpack_async_dependencies__);\n\n\n\nconst globalForPrisma = globalThis;\nfunction makeClient() {\n    const pool = new pg__WEBPACK_IMPORTED_MODULE_0__.Pool({\n        connectionString: process.env.DATABASE_URL,\n        max: 5,\n        idleTimeoutMillis: 10000,\n        connectionTimeoutMillis: 10000\n    });\n    const adapter = new _prisma_adapter_pg__WEBPACK_IMPORTED_MODULE_1__.PrismaPg(pool);\n    return new _generated_prisma_client__WEBPACK_IMPORTED_MODULE_2__.PrismaClient({\n        adapter\n    });\n}\nconst prisma = globalForPrisma.prisma ?? makeClient();\n// Cache on globalThis in both dev (survives HMR) and prod (survives across\n// requests within the same warm serverless function instance)\nglobalForPrisma.prisma = prisma;\n\n__webpack_async_result__();\n} catch(e) { __webpack_async_result__(e); } });//# sourceURL=[module]\n//# sourceMappingURL=data:application/json;charset=utf-8;base64,eyJ2ZXJzaW9uIjozLCJmaWxlIjoiKHJzYykvLi9zcmMvbGliL3ByaXNtYS50cyIsIm1hcHBpbmdzIjoiOzs7Ozs7Ozs7O0FBQXlCO0FBQ29CO0FBQ2U7QUFFNUQsTUFBTUcsa0JBQWtCQztBQUV4QixTQUFTQztJQUNQLE1BQU1DLE9BQU8sSUFBSU4sb0NBQUlBLENBQUM7UUFDcEJPLGtCQUFrQkMsUUFBUUMsR0FBRyxDQUFDQyxZQUFZO1FBQzFDQyxLQUFLO1FBQ0xDLG1CQUFtQjtRQUNuQkMseUJBQXlCO0lBQzNCO0lBQ0EsTUFBTUMsVUFBVSxJQUFJYix3REFBUUEsQ0FBQ0s7SUFDN0IsT0FBTyxJQUFJSixrRUFBWUEsQ0FBQztRQUFFWTtJQUFRO0FBQ3BDO0FBRU8sTUFBTUMsU0FBdUJaLGdCQUFnQlksTUFBTSxJQUFJVixhQUFZO0FBRTFFLDJFQUEyRTtBQUMzRSw4REFBOEQ7QUFDOURGLGdCQUFnQlksTUFBTSxHQUFHQSIsInNvdXJjZXMiOlsiL1VzZXJzL3VtYW1haGVzaC9EZXNrdG9wL3ZhbnRpeCBkYXNoYm9hcmQvc3JjL2xpYi9wcmlzbWEudHMiXSwic291cmNlc0NvbnRlbnQiOlsiaW1wb3J0IHsgUG9vbCB9IGZyb20gJ3BnJ1xuaW1wb3J0IHsgUHJpc21hUGcgfSBmcm9tICdAcHJpc21hL2FkYXB0ZXItcGcnXG5pbXBvcnQgeyBQcmlzbWFDbGllbnQgfSBmcm9tICcuLi8uLi9nZW5lcmF0ZWQvcHJpc21hL2NsaWVudCdcblxuY29uc3QgZ2xvYmFsRm9yUHJpc21hID0gZ2xvYmFsVGhpcyBhcyB1bmtub3duIGFzIHsgcHJpc21hOiBQcmlzbWFDbGllbnQgfVxuXG5mdW5jdGlvbiBtYWtlQ2xpZW50KCk6IFByaXNtYUNsaWVudCB7XG4gIGNvbnN0IHBvb2wgPSBuZXcgUG9vbCh7XG4gICAgY29ubmVjdGlvblN0cmluZzogcHJvY2Vzcy5lbnYuREFUQUJBU0VfVVJMISxcbiAgICBtYXg6IDUsIC8vIHByZXZlbnQgY29ubmVjdGlvbiBleGhhdXN0aW9uIG9uIFN1cGFiYXNlIChmcmVlIHRpZXIgY2FwOiAyNSlcbiAgICBpZGxlVGltZW91dE1pbGxpczogMTBfMDAwLFxuICAgIGNvbm5lY3Rpb25UaW1lb3V0TWlsbGlzOiAxMF8wMDAsXG4gIH0pXG4gIGNvbnN0IGFkYXB0ZXIgPSBuZXcgUHJpc21hUGcocG9vbClcbiAgcmV0dXJuIG5ldyBQcmlzbWFDbGllbnQoeyBhZGFwdGVyIH0gYXMgYW55KVxufVxuXG5leHBvcnQgY29uc3QgcHJpc21hOiBQcmlzbWFDbGllbnQgPSBnbG9iYWxGb3JQcmlzbWEucHJpc21hID8/IG1ha2VDbGllbnQoKVxuXG4vLyBDYWNoZSBvbiBnbG9iYWxUaGlzIGluIGJvdGggZGV2IChzdXJ2aXZlcyBITVIpIGFuZCBwcm9kIChzdXJ2aXZlcyBhY3Jvc3Ncbi8vIHJlcXVlc3RzIHdpdGhpbiB0aGUgc2FtZSB3YXJtIHNlcnZlcmxlc3MgZnVuY3Rpb24gaW5zdGFuY2UpXG5nbG9iYWxGb3JQcmlzbWEucHJpc21hID0gcHJpc21hXG4iXSwibmFtZXMiOlsiUG9vbCIsIlByaXNtYVBnIiwiUHJpc21hQ2xpZW50IiwiZ2xvYmFsRm9yUHJpc21hIiwiZ2xvYmFsVGhpcyIsIm1ha2VDbGllbnQiLCJwb29sIiwiY29ubmVjdGlvblN0cmluZyIsInByb2Nlc3MiLCJlbnYiLCJEQVRBQkFTRV9VUkwiLCJtYXgiLCJpZGxlVGltZW91dE1pbGxpcyIsImNvbm5lY3Rpb25UaW1lb3V0TWlsbGlzIiwiYWRhcHRlciIsInByaXNtYSJdLCJpZ25vcmVMaXN0IjpbXSwic291cmNlUm9vdCI6IiJ9\n//# sourceURL=webpack-internal:///(rsc)/./src/lib/prisma.ts\n");
 
 /***/ }),
 
@@ -241,28 +241,6 @@ module.exports = import("@prisma/client/runtime/query_compiler_fast_bg.postgresq
 
 /***/ }),
 
-/***/ "crypto":
-/*!*************************!*\
-  !*** external "crypto" ***!
-  \*************************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("crypto");
-
-/***/ }),
-
-/***/ "fs":
-/*!*********************!*\
-  !*** external "fs" ***!
-  \*********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("fs");
-
-/***/ }),
-
 /***/ "next/dist/compiled/next-server/app-page.runtime.dev.js":
 /*!*************************************************************************!*\
   !*** external "next/dist/compiled/next-server/app-page.runtime.dev.js" ***!
@@ -340,28 +318,6 @@ module.exports = require("node:url");
 
 /***/ }),
 
-/***/ "os":
-/*!*********************!*\
-  !*** external "os" ***!
-  \*********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("os");
-
-/***/ }),
-
-/***/ "path":
-/*!***********************!*\
-  !*** external "path" ***!
-  \***********************/
-/***/ ((module) => {
-
-"use strict";
-module.exports = require("path");
-
-/***/ }),
-
 /***/ "pg":
 /*!*********************!*\
   !*** external "pg" ***!
@@ -380,7 +336,7 @@ module.exports = import("pg");;
 var __webpack_require__ = require("../../../../webpack-runtime.js");
 __webpack_require__.C(exports);
 var __webpack_exec__ = (moduleId) => (__webpack_require__(__webpack_require__.s = moduleId))
-var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@supabase","vendor-chunks/tslib","vendor-chunks/iceberg-js","vendor-chunks/dotenv","vendor-chunks/zod"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fvideos%2F%5Bid%5D%2Froute&page=%2Fapi%2Fvideos%2F%5Bid%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fvideos%2F%5Bid%5D%2Froute.ts&appDir=%2FUsers%2Fumamahesh%2FDesktop%2Fvantix%20dashboard%2Fsrc%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2FUsers%2Fumamahesh%2FDesktop%2Fvantix%20dashboard&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!")));
+var __webpack_exports__ = __webpack_require__.X(0, ["vendor-chunks/next","vendor-chunks/@supabase","vendor-chunks/tslib","vendor-chunks/iceberg-js","vendor-chunks/zod"], () => (__webpack_exec__("(rsc)/./node_modules/next/dist/build/webpack/loaders/next-app-loader/index.js?name=app%2Fapi%2Fvideos%2F%5Bid%5D%2Froute&page=%2Fapi%2Fvideos%2F%5Bid%5D%2Froute&appPaths=&pagePath=private-next-app-dir%2Fapi%2Fvideos%2F%5Bid%5D%2Froute.ts&appDir=%2FUsers%2Fumamahesh%2FDesktop%2Fvantix%20dashboard%2Fsrc%2Fapp&pageExtensions=tsx&pageExtensions=ts&pageExtensions=jsx&pageExtensions=js&rootDir=%2FUsers%2Fumamahesh%2FDesktop%2Fvantix%20dashboard&isDev=true&tsconfigPath=tsconfig.json&basePath=&assetPrefix=&nextConfigOutput=&preferredRegion=&middlewareConfig=e30%3D&isGlobalNotFoundEnabled=!")));
 module.exports = __webpack_exports__;
 
 })();
