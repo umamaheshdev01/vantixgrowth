@@ -1,0 +1,262 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  admin
+  employee
+}
+
+enum UserStatus {
+  active
+  inactive
+}
+
+enum PackageTier {
+  starter
+  growth
+  premium
+}
+
+enum ClientStatus {
+  active
+  on_hold
+  upcoming
+  ended
+  archived
+}
+
+enum EmploymentType {
+  full_time
+  part_time
+  freelance
+}
+
+enum PayType {
+  monthly
+  per_video
+}
+
+enum EmployeeStatus {
+  active
+  inactive
+}
+
+enum VideoType {
+  long_form
+  short_form
+  reel
+  thumbnail
+  other
+}
+
+enum VideoStatus {
+  brief_received
+  footage_received
+  assigned
+  in_editing
+  internal_review
+  sent_to_client
+  revisions_requested
+  in_revision
+  approved
+  delivered
+  cancelled
+}
+
+enum FinanceType {
+  income
+  expense
+}
+
+enum PaymentMethod {
+  bank_transfer
+  upi
+  cash
+  other
+}
+
+enum ActivityEntityType {
+  client
+  video
+  employee
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String     @id @default(uuid())
+  name          String     @db.VarChar(100)
+  email         String     @unique @db.VarChar(255)
+  password_hash String     @db.Text
+  role          Role
+  status        UserStatus @default(active)
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  employee             Employee?
+  video_status_changes VideoStatusHistory[]
+  activity_logs        ActivityLog[]
+
+  @@map("users")
+}
+
+model Client {
+  id                  String       @id @default(uuid())
+  name                String       @db.VarChar(100)
+  niche               String       @db.VarChar(50)
+  contact_name        String       @db.VarChar(100)
+  contact_email       String       @db.VarChar(255)
+  contact_phone       String?      @db.VarChar(20)
+  retainer_amount     Int
+  package_tier        PackageTier
+  status              ClientStatus
+  contract_start_date DateTime     @db.Date
+  contract_end_date   DateTime?    @db.Date
+  min_contract_months Int?
+  youtube_url         String?      @db.Text
+  notes               String?      @db.Text
+  logo_url            String?      @db.Text
+  created_at          DateTime     @default(now())
+  updated_at          DateTime     @updatedAt
+
+  videos          Video[]
+  finance_entries FinanceEntry[]
+
+  @@index([status])
+  @@map("clients")
+}
+
+model Employee {
+  id              String         @id @default(uuid())
+  user_id         String         @unique
+  role            String         @db.VarChar(100)
+  employment_type EmploymentType
+  pay_type        PayType
+  pay_rate        Int
+  status          EmployeeStatus
+  start_date      DateTime?      @db.Date
+  notes           String?        @db.Text
+  created_at      DateTime       @default(now())
+  updated_at      DateTime       @updatedAt
+
+  user            User           @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  assigned_videos Video[]        @relation("AssignedEditor")
+  finance_entries FinanceEntry[]
+
+  @@map("employees")
+}
+
+model Video {
+  id                 String      @id @default(uuid())
+  title              String      @db.VarChar(150)
+  client_id          String
+  video_type         VideoType
+  assigned_editor_id String?
+  status             VideoStatus
+  due_date           DateTime    @db.Date
+  // Set by backend when status transitions to `assigned`; never user-editable
+  assigned_at        DateTime?
+  // Incremented by backend on each `revisions_requested` transition
+  revision_count     Int         @default(0)
+  brief_url          String?     @db.Text
+  footage_url        String?     @db.Text
+  // Required before `delivered` — enforced in application layer, not DB
+  final_file_url     String?     @db.Text
+  notes              String?     @db.Text
+  created_at         DateTime    @default(now())
+  updated_at         DateTime    @updatedAt
+
+  client          Client               @relation(fields: [client_id], references: [id], onDelete: Restrict)
+  assigned_editor Employee?            @relation("AssignedEditor", fields: [assigned_editor_id], references: [id], onDelete: Restrict)
+  status_history  VideoStatusHistory[]
+
+  @@index([client_id])
+  @@index([assigned_editor_id])
+  @@index([status])
+  @@index([due_date])
+  @@map("videos")
+}
+
+// Append-only — never updated after insert
+model VideoStatusHistory {
+  id             String       @id @default(uuid())
+  video_id       String
+  from_status    VideoStatus?
+  to_status      VideoStatus
+  changed_by     String
+  // Populated when to_status = revisions_requested; also used for cancellation notes
+  revision_notes String?      @db.Text
+  created_at     DateTime     @default(now())
+
+  video   Video @relation(fields: [video_id], references: [id], onDelete: Restrict)
+  changer User  @relation(fields: [changed_by], references: [id], onDelete: Restrict)
+
+  @@index([video_id])
+  @@index([to_status])
+  @@map("video_status_history")
+}
+
+model FinanceEntry {
+  id             String        @id @default(uuid())
+  date           DateTime      @db.Date
+  type           FinanceType
+  category       String        @db.VarChar(50)
+  description    String        @db.VarChar(200)
+  amount         Int
+  payment_method PaymentMethod
+  client_id      String?
+  employee_id    String?
+  receipt_url    String?       @db.Text
+  notes          String?       @db.Text
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  client   Client?   @relation(fields: [client_id], references: [id], onDelete: Restrict)
+  employee Employee? @relation(fields: [employee_id], references: [id], onDelete: Restrict)
+
+  @@index([client_id])
+  @@index([employee_id])
+  @@index([date, type])
+  @@map("finance_entries")
+}
+
+// Append-only — entity_id is intentionally not a foreign key (generic across entity types)
+model ActivityLog {
+  id          String             @id @default(uuid())
+  entity_type ActivityEntityType
+  entity_id   String
+  user_id     String
+  action      String             @db.Text
+  created_at  DateTime           @default(now())
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Restrict)
+
+  @@index([entity_type, entity_id])
+  @@map("activity_log")
+}
+
+// Singleton row (id always = 1) for agency-wide settings
+model CompanySettings {
+  id              Int      @id @default(1)
+  company_name    String?  @db.VarChar(100)
+  fy_start_month  Int      @default(4)
+  currency_format String   @default("INR") @db.VarChar(20)
+  updated_at      DateTime @updatedAt
+
+  @@map("company_settings")
+}
