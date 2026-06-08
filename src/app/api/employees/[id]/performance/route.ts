@@ -20,8 +20,18 @@ export async function GET(
         to_status: 'delivered',
         video: { assigned_editor_id: id },
       },
-      include: { video: { select: { due_date: true, assigned_at: true } } },
-      orderBy: { created_at: 'asc' },
+      include: {
+        video: {
+          select: {
+            id: true,
+            title: true,
+            due_date: true,
+            assigned_at: true,
+            client: { select: { name: true } },
+          },
+        },
+      },
+      orderBy: { created_at: 'desc' },
     })
 
     const total_delivered = deliveredHistory.length
@@ -42,12 +52,24 @@ export async function GET(
       }
     }
 
-    const late_pct = total_delivered === 0 ? '—' : `${((late / total_delivered) * 100).toFixed(1)}%`
+    const late_pct = total_delivered === 0 ? null : parseFloat(((late / total_delivered) * 100).toFixed(1))
     const avg_turnaround_days = turnaround_count === 0
-      ? '—'
+      ? null
       : parseFloat((total_turnaround_days / turnaround_count).toFixed(1))
 
-    return ok({ total_delivered, on_time, late, late_pct, avg_turnaround_days })
+    const history = deliveredHistory.map(h => ({
+      video_id: h.video_id,
+      video_title: h.video.title,
+      client_name: h.video.client?.name ?? '—',
+      assigned_at: h.video.assigned_at?.toISOString() ?? null,
+      delivered_at: h.created_at.toISOString(),
+      turnaround_days: h.video.assigned_at
+        ? parseFloat(((h.created_at.getTime() - h.video.assigned_at.getTime()) / (1000 * 60 * 60 * 24)).toFixed(1))
+        : null,
+      is_on_time: h.created_at <= h.video.due_date,
+    }))
+
+    return ok({ total_delivered, on_time, late, late_pct, avg_turnaround_days, history })
   } catch {
     return serverError()
   }

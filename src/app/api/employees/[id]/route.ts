@@ -6,6 +6,7 @@ import { ok, notFound, serverError } from '@/lib/response'
 import { parseBody } from '@/lib/validate'
 
 const patchSchema = z.object({
+  full_name: z.string().min(1).max(100).optional(),
   role: z.string().min(1).max(100).optional(),
   employment_type: z.enum(['full_time', 'part_time', 'freelance']).optional(),
   pay_type: z.enum(['monthly', 'per_video']).optional(),
@@ -60,13 +61,19 @@ export async function PATCH(
 
     const payTypeChanged = data!.pay_type !== undefined && data!.pay_type !== existing.pay_type
 
+    const { full_name, ...employeeFields } = data!
+
+    if (full_name) {
+      await prisma.user.update({ where: { id: existing.user_id }, data: { name: full_name } })
+    }
+
     const updated = await prisma.employee.update({
       where: { id },
       data: {
-        ...data!,
-        start_date: data!.start_date
-          ? new Date(data!.start_date)
-          : data!.start_date === null ? null : undefined,
+        ...employeeFields,
+        start_date: employeeFields.start_date
+          ? new Date(employeeFields.start_date)
+          : employeeFields.start_date === null ? null : undefined,
       },
     })
 
