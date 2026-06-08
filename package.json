@@ -7,15 +7,13 @@
     "dev": "next dev",
     "build": "prisma generate && next build",
     "postinstall": "prisma generate",
-    "start": "next start",
-    "seed:admin": "tsx prisma/seedAdmin.ts"
+    "start": "next start"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/node": "^25.9.2",
     "@types/pg": "^8.20.0",
     "@types/react": "^19.2.17",
@@ -40,7 +38,6 @@
     "@radix-ui/react-slot": "^1.2.5",
     "@radix-ui/react-tooltip": "^1.2.9",
     "@supabase/supabase-js": "^2.107.0",
-    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
