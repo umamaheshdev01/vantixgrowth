@@ -1,10 +1,10 @@
 {
   "/api/auth/me/route": "app/api/auth/me/route.js",
-  "/api/clients/route": "app/api/clients/route.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/page": "app/page.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
-  "/(auth)/forgot-password/page": "app/(auth)/forgot-password/page.js",
-  "/(auth)/reset-password/page": "app/(auth)/reset-password/page.js",
-  "/(dashboard)/clients/page": "app/(dashboard)/clients/page.js",
-  "/(dashboard)/employees/page": "app/(dashboard)/employees/page.js"
+  "/(dashboard)/employees/page": "app/(dashboard)/employees/page.js",
+  "/(dashboard)/clients/[id]/page": "app/(dashboard)/clients/[id]/page.js",
+  "/(dashboard)/finance/page": "app/(dashboard)/finance/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js"
 }
