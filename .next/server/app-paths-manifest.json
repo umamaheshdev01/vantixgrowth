@@ -1,12 +1,17 @@
 {
-  "/api/clients/route": "app/api/clients/route.js",
-  "/api/employees/route": "app/api/employees/route.js",
   "/api/auth/me/route": "app/api/auth/me/route.js",
+  "/api/employees/route": "app/api/employees/route.js",
   "/api/videos/route": "app/api/videos/route.js",
+  "/api/clients/route": "app/api/clients/route.js",
+  "/api/videos/[id]/delete/route": "app/api/videos/[id]/delete/route.js",
+  "/api/clients/[id]/archive/route": "app/api/clients/[id]/archive/route.js",
+  "/page": "app/page.js",
   "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
   "/(dashboard)/clients/page": "app/(dashboard)/clients/page.js",
   "/(dashboard)/employees/page": "app/(dashboard)/employees/page.js",
-  "/(dashboard)/finance/page": "app/(dashboard)/finance/page.js",
   "/(dashboard)/videos/page": "app/(dashboard)/videos/page.js",
-  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js"
+  "/(dashboard)/employees/[id]/page": "app/(dashboard)/employees/[id]/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(dashboard)/finance/page": "app/(dashboard)/finance/page.js"
 }
