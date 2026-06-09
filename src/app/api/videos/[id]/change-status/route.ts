@@ -11,8 +11,6 @@ const VIDEO_STATUSES = [
   'approved', 'delivered', 'cancelled',
 ] as const
 
-const EMPLOYEE_ALLOWED = new Set(['in_editing', 'in_revision'])
-
 const schema = z.object({
   to_status: z.enum(VIDEO_STATUSES),
   revision_notes: z.string().max(1000).optional().nullable(),
@@ -36,8 +34,16 @@ export async function POST(
     const toStatus = data!.to_status
     const fromStatus = video.status
 
-    if (user.role === 'employee' && !EMPLOYEE_ALLOWED.has(toStatus)) {
-      return forbidden('This status change requires admin permissions')
+    // Employees may change the status of their own videos to any stage
+    // (no admin approval) — but only videos assigned to them.
+    if (user.role === 'employee') {
+      const emp = await prisma.employee.findUnique({
+        where: { user_id: user.id },
+        select: { id: true },
+      })
+      if (!emp || video.assigned_editor_id !== emp.id) {
+        return forbidden('You can only change the status of videos assigned to you')
+      }
     }
 
     if (toStatus === 'delivered' && !video.final_file_url) {

@@ -234,15 +234,10 @@ function StatusUpdateSection({
               </Button>
             </>
           ) : nextStage ? (
-            !isAdmin && (video.status === 'in_editing' || video.status === 'in_revision')
-              ? (
-                <span className="text-sm italic text-muted-foreground">Awaiting admin review</span>
-              ) : (
-                <Button size="sm" disabled={loading} onClick={handleAdvance}>
-                  {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-                  Advance to: {statusLabels[nextStage] ?? nextStage}
-                </Button>
-              )
+            <Button size="sm" disabled={loading} onClick={handleAdvance}>
+              {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+              Advance to: {statusLabels[nextStage] ?? nextStage}
+            </Button>
           ) : null}
         </div>
 
@@ -650,6 +645,10 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
   const [editOpen, setEditOpen] = useState(false)
 
   const isAdmin = user?.role === 'admin'
+  // The video GET API only returns videos an employee is assigned to, so any
+  // non-admin who can load this page is the assigned editor and may edit
+  // production details.
+  const canEdit = isAdmin || user?.role === 'employee'
 
   const { data: video = null, isLoading: loading } =
     useSWR<VideoListItem>(`/api/videos/${videoId}`)
@@ -757,7 +756,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
             </>
           )}
         </div>
-        {isAdmin && (
+        {canEdit && (
           <Button size="sm" variant="outline" onClick={() => setEditOpen(true)}>
             Edit
           </Button>
@@ -778,7 +777,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
       {!isCancelled && (
         <StatusUpdateSection
           video={video}
-          isAdmin={isAdmin}
+          isAdmin={canEdit}
           onRefresh={handleRefresh}
         />
       )}
@@ -789,7 +788,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
       {/* Video Details */}
       <VideoDetailsCard
         video={video}
-        isAdmin={isAdmin}
+        isAdmin={canEdit}
         onEdit={() => setEditOpen(true)}
       />
 
@@ -800,14 +799,14 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
       <InternalNotes
         videoId={video.id}
         initialNotes={video.notes}
-        isAdmin={isAdmin}
+        isAdmin={canEdit}
       />
 
       {/* Activity Log */}
       <ActivityLogSection videoId={video.id} />
 
-      {/* Edit drawer (admin only) */}
-      {isAdmin && (
+      {/* Edit drawer — full fields for admins, production details for assigned employees */}
+      {canEdit && (
         <VideoFormDrawer
           open={editOpen}
           onOpenChange={setEditOpen}
@@ -815,6 +814,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
           clients={clients}
           employees={employees}
           currentUserId={user?.id ?? ''}
+          employeeMode={!isAdmin}
           onSaved={() => {
             refreshAll()
             setEditOpen(false)

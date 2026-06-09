@@ -15,8 +15,6 @@ const ADVANCE_MAP: Record<string, string> = {
   in_revision: 'sent_to_client',
 }
 
-const EMPLOYEE_ALLOWED_NEXT = new Set(['in_editing', 'in_revision'])
-
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -36,12 +34,10 @@ export async function POST(
     const nextStatus = ADVANCE_MAP[video.status]
     if (!nextStatus) return unprocessable(`No advance transition defined from "${video.status}"`)
 
+    // Employees may advance their own videos through any stage (no admin gate).
     if (user.role === 'employee') {
       const emp = await prisma.employee.findUnique({ where: { user_id: user.id }, select: { id: true } })
       if (video.assigned_editor_id !== emp?.id) return forbidden('You can only advance your own videos')
-      if (!EMPLOYEE_ALLOWED_NEXT.has(nextStatus)) {
-        return ok({ awaiting_admin: true, message: 'Awaiting admin review', current_status: video.status })
-      }
     }
 
     if (nextStatus === 'delivered' && !video.final_file_url) {

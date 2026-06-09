@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import useSWR from 'swr'
 import { Loader2, Video } from 'lucide-react'
 import VideoListAdminView from '@/components/videos/VideoListAdminView'
@@ -25,12 +26,15 @@ import { formatDate, getDaysUntil } from '@/lib/dateHelpers'
 import { statusLabels } from '@/lib/statusLabels'
 import { useToast } from '@/hooks/use-toast'
 
-// Next stage map — only includes transitions reachable from current status
-const NEXT_STAGE: Record<string, { next: string; label: string; employeeAllowed: boolean }> = {
-  assigned:            { next: 'in_editing',     label: 'In Editing',     employeeAllowed: true },
-  in_editing:          { next: 'internal_review', label: 'Internal Review', employeeAllowed: false },
-  revisions_requested: { next: 'in_revision',    label: 'In Revision',    employeeAllowed: true },
-  in_revision:         { next: 'sent_to_client', label: 'Sent to Client', employeeAllowed: false },
+// Next stage map — employees may advance through every reachable stage.
+const NEXT_STAGE: Record<string, { next: string; label: string }> = {
+  assigned:            { next: 'in_editing',      label: 'In Editing' },
+  in_editing:          { next: 'internal_review', label: 'Internal Review' },
+  internal_review:     { next: 'sent_to_client',  label: 'Sent to Client' },
+  sent_to_client:      { next: 'approved',        label: 'Approved' },
+  approved:            { next: 'delivered',       label: 'Delivered' },
+  revisions_requested: { next: 'in_revision',     label: 'In Revision' },
+  in_revision:         { next: 'sent_to_client',  label: 'Sent to Client' },
 }
 
 interface MyVideo {
@@ -51,6 +55,7 @@ function DaysCell({ days }: { days: number }) {
 }
 
 function EmployeeVideoView() {
+  const router = useRouter()
   const { toast } = useToast()
   const [advancing, setAdvancing] = useState<string | null>(null)
 
@@ -60,7 +65,7 @@ function EmployeeVideoView() {
 
   const handleAdvance = async (video: MyVideo) => {
     const transition = NEXT_STAGE[video.status]
-    if (!transition?.employeeAllowed) return
+    if (!transition) return
 
     setAdvancing(video.id)
     const res = await apiFetch(`/api/videos/${video.id}/advance`, { method: 'POST' })
@@ -117,8 +122,14 @@ function EmployeeVideoView() {
                     const isCancelled = v.status === 'cancelled'
 
                     return (
-                      <TableRow key={v.id} className={idx % 2 === 1 ? 'bg-muted/20' : ''}>
-                        <TableCell className="font-medium text-foreground">{v.title}</TableCell>
+                      <TableRow
+                        key={v.id}
+                        className={`cursor-pointer ${idx % 2 === 1 ? 'bg-muted/20' : ''}`}
+                        onClick={() => router.push(`/videos/${v.id}`)}
+                      >
+                        <TableCell className="font-medium text-foreground hover:text-primary transition-colors">
+                          {v.title}
+                        </TableCell>
                         <TableCell className="text-sm text-muted-foreground">{v.client.name}</TableCell>
                         <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                           {formatDate(dueDateStr)}
@@ -127,10 +138,10 @@ function EmployeeVideoView() {
                         <TableCell>
                           <DaysCell days={v.days_remaining ?? getDaysUntil(dueDateStr)} />
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right" onClick={e => e.stopPropagation()}>
                           {isCancelled ? (
                             <span className="text-xs text-muted-foreground">Cancelled</span>
-                          ) : transition?.employeeAllowed ? (
+                          ) : transition ? (
                             <Button
                               size="sm"
                               className="h-7 text-xs px-3"
@@ -143,9 +154,7 @@ function EmployeeVideoView() {
                               Mark as {transition.label}
                             </Button>
                           ) : (
-                            <span className="text-xs italic" style={{ color: '#9CA3AF' }}>
-                              Awaiting admin review
-                            </span>
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
                         </TableCell>
                       </TableRow>

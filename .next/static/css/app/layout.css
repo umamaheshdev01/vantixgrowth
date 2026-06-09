@@ -1152,6 +1152,9 @@ video {
 .gap-y-4 {
   row-gap: 1rem;
 }
+.gap-y-5 {
+  row-gap: 1.25rem;
+}
 .space-y-0 > :not([hidden]) ~ :not([hidden]) {
   --tw-space-y-reverse: 0;
   margin-top: calc(0px * calc(1 - var(--tw-space-y-reverse)));
@@ -1710,6 +1713,9 @@ video {
 }
 .tracking-widest {
   letter-spacing: 0.1em;
+}
+.tracking-wide {
+  letter-spacing: 0.025em;
 }
 .text-\[\#1A56DB\] {
   --tw-text-opacity: 1;

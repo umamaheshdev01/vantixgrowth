@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth'
-import { ok, notFound, serverError } from '@/lib/response'
+import { requireAuth, requireAdmin } from '@/lib/auth'
+import { ok, notFound, forbidden, serverError } from '@/lib/response'
 import { parseBody } from '@/lib/validate'
 
 const patchSchema = z.object({
@@ -21,7 +21,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await requireAdmin(req)
+    const user = await requireAuth(req)
     if (user instanceof NextResponse) return user
 
     const { id } = await params
@@ -32,6 +32,11 @@ export async function GET(
       },
     })
     if (!employee) return notFound('Employee not found')
+
+    // Employees may only view their own record; admins can view anyone.
+    if (user.role !== 'admin' && employee.user_id !== user.id) {
+      return forbidden('You can only view your own employee profile')
+    }
 
     const totalPaid = await prisma.financeEntry.aggregate({
       _sum: { amount: true },

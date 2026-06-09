@@ -11,6 +11,11 @@
       "static/chunks/main-app.js",
       "static/chunks/app/page.js"
     ],
+    "/api/auth/me/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/auth/me/route.js"
+    ],
     "/(auth)/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -20,11 +25,6 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(auth)/login/page.js"
-    ],
-    "/api/auth/me/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/auth/me/route.js"
     ],
     "/(dashboard)/layout": [
       "static/chunks/webpack.js",
@@ -66,30 +66,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/api/videos/route.js"
     ],
-    "/(dashboard)/employees/[id]/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/employees/[id]/page.js"
-    ],
     "/api/employees/[id]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/api/employees/[id]/route.js"
-    ],
-    "/api/employees/[id]/videos/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/employees/[id]/videos/route.js"
-    ],
-    "/api/employees/[id]/performance/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/employees/[id]/performance/route.js"
-    ],
-    "/api/employees/[id]/payments/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/employees/[id]/payments/route.js"
     ],
     "/(dashboard)/finance/page": [
       "static/chunks/webpack.js",
@@ -101,15 +81,85 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/settings/page.js"
     ],
-    "/api/videos/[id]/delete/route": [
+    "/(dashboard)/clients/[id]/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/delete/route.js"
+      "static/chunks/app/(dashboard)/clients/[id]/page.js"
     ],
-    "/api/clients/[id]/archive/route": [
+    "/api/clients/[id]/route": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/api/clients/[id]/archive/route.js"
+      "static/chunks/app/api/clients/[id]/route.js"
+    ],
+    "/api/clients/[id]/finance/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/clients/[id]/finance/route.js"
+    ],
+    "/api/clients/[id]/videos/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/clients/[id]/videos/route.js"
+    ],
+    "/api/clients/[id]/activity/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/clients/[id]/activity/route.js"
+    ],
+    "/(dashboard)/videos/[id]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(dashboard)/videos/[id]/page.js"
+    ],
+    "/api/videos/[id]/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/[id]/route.js"
+    ],
+    "/api/videos/[id]/history/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/[id]/history/route.js"
+    ],
+    "/api/videos/[id]/activity/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/[id]/activity/route.js"
+    ],
+    "/api/videos/[id]/change-status/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/[id]/change-status/route.js"
+    ],
+    "/api/videos/mine/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/mine/route.js"
+    ],
+    "/(dashboard)/profile/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(dashboard)/profile/page.js"
+    ],
+    "/api/employees/me/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/employees/me/route.js"
+    ],
+    "/api/videos/[id]/advance/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/videos/[id]/advance/route.js"
+    ],
+    "/api/employees/me/payments/route": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/api/employees/me/payments/route.js"
+    ],
+    "/(auth)/forgot-password/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(auth)/forgot-password/page.js"
     ]
   }
 }

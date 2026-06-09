@@ -49,12 +49,18 @@ export async function GET(
   }
 }
 
+// Fields an assigned employee is allowed to edit on their own videos.
+// They may NOT reassign the editor or move the due date — those stay admin-only.
+const EMPLOYEE_EDITABLE = new Set([
+  'title', 'video_type', 'brief_url', 'footage_url', 'final_file_url', 'notes',
+])
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await requireAdmin(req)
+    const user = await requireAuth(req)
     if (user instanceof NextResponse) return user
 
     const { id } = await params
@@ -63,6 +69,23 @@ export async function PATCH(
 
     const { data, error } = parseBody(patchSchema, await req.json())
     if (error) return error
+
+    // Employees may only edit production details on videos assigned to them.
+    if (user.role !== 'admin') {
+      const emp = await prisma.employee.findUnique({
+        where: { user_id: user.id },
+        select: { id: true },
+      })
+      if (!emp || existing.assigned_editor_id !== emp.id) {
+        return forbidden('You can only edit videos assigned to you')
+      }
+      const blocked = Object.keys(data!).filter(
+        k => data![k as keyof typeof data] !== undefined && !EMPLOYEE_EDITABLE.has(k),
+      )
+      if (blocked.length > 0) {
+        return forbidden(`You are not allowed to change: ${blocked.join(', ')}`)
+      }
+    }
 
     const updated = await prisma.video.update({
       where: { id },

@@ -109,6 +109,14 @@ interface Props {
   employees: DropdownEmployee[]
   currentUserId: string
   onSaved: () => void
+  /** Pre-selects this client when creating a new video. */
+  defaultClientId?: string
+  /**
+   * Restricts the form to production details an assigned employee may edit
+   * (title, type, URLs, notes). Hides client/editor/status/due-date and never
+   * triggers a status change. Edit-only.
+   */
+  employeeMode?: boolean
 }
 
 export default function VideoFormDrawer({
@@ -118,6 +126,8 @@ export default function VideoFormDrawer({
   clients,
   employees,
   onSaved,
+  defaultClientId,
+  employeeMode = false,
 }: Props) {
   const { toast } = useToast()
   const isEdit = Boolean(video)
@@ -129,13 +139,15 @@ export default function VideoFormDrawer({
 
   useEffect(() => {
     if (open) {
-      const initial = video ? videoToForm(video) : emptyForm()
+      const initial = video
+        ? videoToForm(video)
+        : { ...emptyForm(), client_id: defaultClientId ?? '' }
       setForm(initial)
       initialRef.current = JSON.stringify(initial)
       setErrors({})
       setDirty(false)
     }
-  }, [open, video])
+  }, [open, video, defaultClientId])
 
   useEffect(() => {
     if (!dirty) return
@@ -164,7 +176,7 @@ export default function VideoFormDrawer({
     if (form.status === 'delivered' && !form.final_file_url.trim()) {
       e.final_file_url = 'A Final File URL is required before marking this video as Delivered.'
     }
-    if (form.status === 'cancelled' && !form.cancellation_note.trim()) {
+    if (!employeeMode && form.status === 'cancelled' && !form.cancellation_note.trim()) {
       e.cancellation_note = 'A cancellation note is required.'
     }
     if (form.notes.length > 1000) e.notes = 'Max 1000 characters'
@@ -214,18 +226,28 @@ export default function VideoFormDrawer({
         return
       }
     } else {
-      // Edit — non-status fields via PATCH, status change via change-status
-      const patchPayload: Record<string, unknown> = {
-        title: form.title.trim(),
-        client_id: form.client_id,
-        video_type: form.video_type,
-        assigned_editor_id: editorId,
-        due_date: form.due_date,
-        brief_url: form.brief_url.trim() || null,
-        footage_url: form.footage_url.trim() || null,
-        final_file_url: form.final_file_url.trim() || null,
-        notes: form.notes.trim() || null,
-      }
+      // Edit — non-status fields via PATCH, status change via change-status.
+      // Employees may only touch production details (no client/editor/due_date/status).
+      const patchPayload: Record<string, unknown> = employeeMode
+        ? {
+            title: form.title.trim(),
+            video_type: form.video_type,
+            brief_url: form.brief_url.trim() || null,
+            footage_url: form.footage_url.trim() || null,
+            final_file_url: form.final_file_url.trim() || null,
+            notes: form.notes.trim() || null,
+          }
+        : {
+            title: form.title.trim(),
+            client_id: form.client_id,
+            video_type: form.video_type,
+            assigned_editor_id: editorId,
+            due_date: form.due_date,
+            brief_url: form.brief_url.trim() || null,
+            footage_url: form.footage_url.trim() || null,
+            final_file_url: form.final_file_url.trim() || null,
+            notes: form.notes.trim() || null,
+          }
 
       const patchRes = await apiFetch(`/api/videos/${video!.id}`, {
         method: 'PATCH',
@@ -237,7 +259,7 @@ export default function VideoFormDrawer({
         return
       }
 
-      if (prevStatus && form.status !== prevStatus) {
+      if (!employeeMode && prevStatus && form.status !== prevStatus) {
         const statusRes = await apiFetch(`/api/videos/${video!.id}/change-status`, {
           method: 'POST',
           body: JSON.stringify({
@@ -272,7 +294,9 @@ export default function VideoFormDrawer({
           <SheetHeader>
             <SheetTitle>{isEdit ? `Edit "${video!.title}"` : 'Add Video'}</SheetTitle>
             <SheetDescription>
-              {isEdit ? 'Update video production details.' : 'Add a new video to the production tracker.'}
+              {employeeMode
+                ? 'Update the production details for your video.'
+                : isEdit ? 'Update video production details.' : 'Add a new video to the production tracker.'}
             </SheetDescription>
           </SheetHeader>
 
@@ -292,6 +316,7 @@ export default function VideoFormDrawer({
 
             <div className="grid gap-4 sm:grid-cols-2">
               {/* Client */}
+              {!employeeMode && (
               <div className="space-y-1.5">
                 <Label htmlFor="vid-client">Client *</Label>
                 <select
@@ -307,6 +332,7 @@ export default function VideoFormDrawer({
                 </select>
                 {errors.client_id && <p className="text-xs text-destructive">{errors.client_id}</p>}
               </div>
+              )}
 
               {/* Video Type */}
               <div className="space-y-1.5">
@@ -324,6 +350,7 @@ export default function VideoFormDrawer({
               </div>
 
               {/* Assigned Editor */}
+              {!employeeMode && (
               <div className="space-y-1.5">
                 <Label htmlFor="vid-editor">Assigned Editor</Label>
                 <select
@@ -338,8 +365,10 @@ export default function VideoFormDrawer({
                   ))}
                 </select>
               </div>
+              )}
 
               {/* Status */}
+              {!employeeMode && (
               <div className="space-y-1.5">
                 <Label htmlFor="vid-status">Status *</Label>
                 <select
@@ -354,8 +383,10 @@ export default function VideoFormDrawer({
                 </select>
                 {errors.status && <p className="text-xs text-destructive">{errors.status}</p>}
               </div>
+              )}
 
               {/* Due Date */}
+              {!employeeMode && (
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="vid-due">Due Date *</Label>
                 <Input
@@ -367,10 +398,11 @@ export default function VideoFormDrawer({
                 />
                 {errors.due_date && <p className="text-xs text-destructive">{errors.due_date}</p>}
               </div>
+              )}
             </div>
 
             {/* Cancellation note (when status = cancelled) */}
-            {form.status === 'cancelled' && (
+            {!employeeMode && form.status === 'cancelled' && (
               <div className="space-y-1.5 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
                 <Label htmlFor="vid-cancel-note">Cancellation Note *</Label>
                 <Textarea

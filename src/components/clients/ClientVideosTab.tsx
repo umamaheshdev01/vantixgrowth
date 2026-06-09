@@ -1,10 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import useSWR from 'swr'
 import Link from 'next/link'
 import { Plus, Video } from 'lucide-react'
 import EmptyState from '@/components/shared/EmptyState'
 import StatusBadge from '@/components/shared/StatusBadge'
+import VideoFormDrawer from '@/components/videos/VideoFormDrawer'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -17,7 +19,12 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { formatDate, getDaysUntil } from '@/lib/dateHelpers'
+import { invalidate } from '@/lib/swr'
+import { useAuth } from '@/context/AuthContext'
 import type { ClientVideo } from '@/types/client'
+
+interface DropdownClient { id: string; name: string; status: string }
+interface DropdownEmployee { id: string; user: { name: string } }
 
 const VIDEO_TYPE_LABELS: Record<string, string> = {
   long_form: 'Long Form',
@@ -42,9 +49,22 @@ interface ClientVideosTabProps {
 }
 
 export default function ClientVideosTab({ clientId, clientName }: ClientVideosTabProps) {
-  const { data, isLoading: loading } =
-    useSWR<ClientVideo[]>(`/api/clients/${clientId}/videos?limit=100`)
+  const { user } = useAuth()
+  const videosKey = `/api/clients/${clientId}/videos?limit=100`
+  const { data, isLoading: loading, mutate } = useSWR<ClientVideo[]>(videosKey)
   const videos = data ?? []
+
+  const { data: clientsData } = useSWR<DropdownClient[]>('/api/clients?limit=200')
+  const clients = clientsData ?? []
+  const { data: employeesData } = useSWR<DropdownEmployee[]>('/api/employees?limit=200')
+  const employees = employeesData ?? []
+
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
+  const handleSaved = () => {
+    mutate()
+    invalidate('/api/videos', '/api/clients', 'dashboard:')
+  }
 
   return (
     <div className="space-y-4">
@@ -52,11 +72,9 @@ export default function ClientVideosTab({ clientId, clientName }: ClientVideosTa
         <p className="text-sm text-muted-foreground">
           Videos for <span className="font-medium text-foreground">{clientName}</span>
         </p>
-        <Button size="sm" asChild>
-          <Link href={`/videos?client=${clientId}&action=add`}>
-            <Plus className="h-4 w-4" />
-            Add Video for this Client
-          </Link>
+        <Button size="sm" onClick={() => setDrawerOpen(true)}>
+          <Plus className="h-4 w-4" />
+          Add Video for this Client
         </Button>
       </div>
 
@@ -72,7 +90,7 @@ export default function ClientVideosTab({ clientId, clientName }: ClientVideosTa
               title="No videos yet"
               message="Add the first video for this client to start tracking production."
               actionLabel="Add Video"
-              onAction={() => window.location.href = `/videos?client=${clientId}&action=add`}
+              onAction={() => setDrawerOpen(true)}
             />
           ) : (
             <div className="overflow-x-auto">
@@ -126,6 +144,16 @@ export default function ClientVideosTab({ clientId, clientName }: ClientVideosTa
           )}
         </CardContent>
       </Card>
+
+      <VideoFormDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        clients={clients}
+        employees={employees}
+        currentUserId={user?.id ?? ''}
+        defaultClientId={clientId}
+        onSaved={handleSaved}
+      />
     </div>
   )
 }

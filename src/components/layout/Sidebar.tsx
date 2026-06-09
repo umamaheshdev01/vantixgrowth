@@ -11,6 +11,7 @@ import {
   Video,
   IndianRupee,
   Settings,
+  User,
   LogOut,
   Menu,
   X,
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: '/clients', label: 'Clients', icon: Briefcase, roles: ['admin'] },
   { href: '/employees', label: 'Employees', icon: Users, roles: ['admin'] },
   { href: '/videos', label: 'Video Tracker', icon: Video, roles: ['admin', 'employee'] },
+  { href: '/profile', label: 'My Profile', icon: User, roles: ['employee'] },
   { href: '/finance', label: 'Finance', icon: IndianRupee, roles: ['admin'] },
   { href: '/settings', label: 'Settings', icon: Settings, roles: ['admin'] },
 ]
