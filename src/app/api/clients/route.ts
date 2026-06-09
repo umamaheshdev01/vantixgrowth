@@ -11,7 +11,7 @@ const createSchema = z.object({
   niche: z.string().min(1).max(50),
   contact_name: z.string().min(1),
   contact_email: z.string().email(),
-  contact_phone: z.string().max(20).optional(),
+  contact_phone: z.string().max(20).nullable().optional(),
   retainer_amount: z.number().int().positive(),
   package_tier: z.enum(['starter', 'growth', 'premium']),
   status: z.enum(['active', 'on_hold', 'upcoming', 'ended', 'archived']),
@@ -22,14 +22,14 @@ const createSchema = z.object({
     ninety.setDate(ninety.getDate() + 90)
     return d <= ninety
   }, 'Start date cannot be more than 90 days in the future'),
-  contract_end_date: z.string().optional(),
-  min_contract_months: z.number().int().positive().optional(),
+  contract_end_date: z.string().nullable().optional(),
+  min_contract_months: z.number().int().positive().nullable().optional(),
   youtube_url: z.string().url().refine(u =>
     u.startsWith('https://youtube.com/') || u.startsWith('https://www.youtube.com/'),
     'Must be a YouTube URL'
-  ).optional(),
-  notes: z.string().max(1000).optional(),
-  logo_url: z.string().url().optional(),
+  ).nullable().optional(),
+  notes: z.string().max(1000).nullable().optional(),
+  logo_url: z.string().url().nullable().optional(),
 })
 
 export async function GET(req: NextRequest) {

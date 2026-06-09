@@ -1003,8 +1003,8 @@ export default function FinanceListView() {
                               className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
                               style={
                                 entry.type === 'income'
-                                  ? { backgroundColor: '#DCFCE7', color: '#15803D' }
-                                  : { backgroundColor: '#FEF2F2', color: '#DC2626' }
+                                  ? { backgroundColor: 'rgba(34,197,94,0.15)', color: '#4ADE80', border: '1px solid rgba(34,197,94,0.3)' }
+                                  : { backgroundColor: 'rgba(239,68,68,0.15)', color: '#F87171', border: '1px solid rgba(239,68,68,0.3)' }
                               }
                             >
                               {entry.type === 'income' ? 'Income' : 'Expense'}
@@ -1013,7 +1013,7 @@ export default function FinanceListView() {
                           <TableCell>
                             <span
                               className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium"
-                              style={{ backgroundColor: '#F3F4F6', color: '#374151' }}
+                              style={{ backgroundColor: 'rgba(255,255,255,0.08)', color: '#D1D5DB', border: '1px solid rgba(255,255,255,0.12)' }}
                             >
                               {getCategoryLabel(entry.category)}
                             </span>
