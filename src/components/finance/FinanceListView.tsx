@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
   ChevronLeft,
@@ -49,6 +50,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { supabase } from '@/lib/supabase'
+import { invalidate } from '@/lib/swr'
 import { formatINR } from '@/lib/formatCurrency'
 import { formatDate, getMonthRange, getPreviousMonthRange } from '@/lib/dateHelpers'
 import {
@@ -609,13 +611,6 @@ export default function FinanceListView() {
     selectedMonth.getFullYear() === currentMonth.getFullYear() &&
     selectedMonth.getMonth() === currentMonth.getMonth()
 
-  // Data
-  const [entries, setEntries] = useState<FinanceEntry[]>([])
-  const [prevEntries, setPrevEntries] = useState<FinanceEntry[]>([])
-  const [clients, setClients] = useState<DropdownClient[]>([])
-  const [employees, setEmployees] = useState<DropdownEmployee[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dropdownsLoaded, setDropdownsLoaded] = useState(false)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -636,42 +631,49 @@ export default function FinanceListView() {
 
   // ─── Fetch ─────────────────────────────────────────────────────────────────
 
-  const fetchEntries = useCallback(async () => {
-    setLoading(true)
-    const { start, end } = getMonthRange(selectedMonth)
-    const prev = getPreviousMonthRange(selectedMonth)
+  // These reads hit Supabase directly (not the REST API), so they use custom
+  // 'finance:' SWR keys; finance mutations invalidate that prefix.
+  const monthKey = `${selectedMonth.getFullYear()}-${selectedMonth.getMonth()}`
+  const { data: entriesData, isLoading: loading } = useSWR(
+    `finance:entries:${monthKey}`,
+    async () => {
+      const { start, end } = getMonthRange(selectedMonth)
+      const prev = getPreviousMonthRange(selectedMonth)
+      const [currentRes, prevRes] = await Promise.all([
+        supabase
+          .from('finance_entries')
+          .select('*, clients(id, name), employees(id, user_id, users(name))')
+          .gte('date', start)
+          .lte('date', end)
+          .order('date', { ascending: false }),
+        supabase
+          .from('finance_entries')
+          .select('id, type, category, amount')
+          .gte('date', prev.start)
+          .lte('date', prev.end),
+      ])
+      return {
+        entries: (currentRes.data as FinanceEntry[]) ?? [],
+        prevEntries: (prevRes.data as FinanceEntry[]) ?? [],
+      }
+    },
+  )
+  const entries = entriesData?.entries ?? []
+  const prevEntries = entriesData?.prevEntries ?? []
 
-    const [currentRes, prevRes] = await Promise.all([
-      supabase
-        .from('finance_entries')
-        .select('*, clients(id, name), employees(id, user_id, users(name))')
-        .gte('date', start)
-        .lte('date', end)
-        .order('date', { ascending: false }),
-      supabase
-        .from('finance_entries')
-        .select('id, type, category, amount')
-        .gte('date', prev.start)
-        .lte('date', prev.end),
-    ])
-
-    setEntries((currentRes.data as FinanceEntry[]) ?? [])
-    setPrevEntries((prevRes.data as FinanceEntry[]) ?? [])
-    setLoading(false)
-  }, [selectedMonth])
-
-  const fetchDropdowns = useCallback(async () => {
+  const { data: dropdowns } = useSWR('finance:dropdowns', async () => {
     const [clientsRes, empsRes] = await Promise.all([
       supabase.from('clients').select('id, name, status'),
       supabase.from('employees').select('id, user_id, status, users(name)'),
     ])
-    setClients((clientsRes.data as unknown as DropdownClient[]) ?? [])
-    setEmployees((empsRes.data as unknown as DropdownEmployee[]) ?? [])
-    setDropdownsLoaded(true)
-  }, [])
-
-  useEffect(() => { fetchDropdowns() }, [fetchDropdowns])
-  useEffect(() => { fetchEntries() }, [fetchEntries])
+    return {
+      clients: (clientsRes.data as unknown as DropdownClient[]) ?? [],
+      employees: (empsRes.data as unknown as DropdownEmployee[]) ?? [],
+    }
+  })
+  const clients = dropdowns?.clients ?? []
+  const employees = dropdowns?.employees ?? []
+  const dropdownsLoaded = dropdowns !== undefined
 
   // ─── Overview metrics ─────────────────────────────────────────────────────
 
@@ -758,7 +760,7 @@ export default function FinanceListView() {
     }
     toast({ variant: 'success', title: 'Entry deleted' })
     setDeleteTarget(null)
-    fetchEntries()
+    invalidate('finance:', '/api/clients', '/api/employees', 'dashboard:')
   }
 
   // ─── Month navigation ─────────────────────────────────────────────────────
@@ -1106,7 +1108,7 @@ export default function FinanceListView() {
           entry={editingEntry}
           clients={clients}
           employees={employees}
-          onSaved={fetchEntries}
+          onSaved={() => invalidate('finance:', '/api/clients', '/api/employees', 'dashboard:')}
         />
       )}
 

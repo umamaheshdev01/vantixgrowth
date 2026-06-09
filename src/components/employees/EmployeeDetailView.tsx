@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
   CheckCircle2,
@@ -37,6 +38,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { apiFetch } from '@/lib/api'
+import { invalidate } from '@/lib/swr'
 import { formatINR } from '@/lib/formatCurrency'
 import { formatDate, getDaysUntil } from '@/lib/dateHelpers'
 import { useToast } from '@/hooks/use-toast'
@@ -272,24 +274,12 @@ function OverviewTab({
 // ─── Tab 2: Assigned Videos ───────────────────────────────────────────────────
 
 function AssignedVideosTab({ employeeId }: { employeeId: string }) {
-  const [videos, setVideos] = useState<AssignedVideo[]>([])
-  const [loading, setLoading] = useState(true)
   const [activeOnly, setActiveOnly] = useState(true)
-  const [loaded, setLoaded] = useState(false)
 
-  const fetchVideos = useCallback(async () => {
-    setLoading(true)
-    const res = await apiFetch<AssignedVideo[]>(
-      `/api/employees/${employeeId}/videos?includeAll=true&limit=200`,
-    )
-    setVideos(res.success && res.data ? res.data : [])
-    setLoading(false)
-    setLoaded(true)
-  }, [employeeId])
-
-  useEffect(() => {
-    if (!loaded) fetchVideos()
-  }, [loaded, fetchVideos])
+  const { data, isLoading: loading } = useSWR<AssignedVideo[]>(
+    `/api/employees/${employeeId}/videos?includeAll=true&limit=200`,
+  )
+  const videos = data ?? []
 
   const displayed = activeOnly
     ? videos.filter(v => v.status !== 'delivered' && v.status !== 'cancelled')
@@ -371,23 +361,8 @@ function AssignedVideosTab({ employeeId }: { employeeId: string }) {
 // ─── Tab 3: Payment History ───────────────────────────────────────────────────
 
 function PaymentHistoryTab({ employeeId }: { employeeId: string }) {
-  const [data, setData] = useState<PaymentsData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [loaded, setLoaded] = useState(false)
-
-  const fetchPayments = useCallback(async () => {
-    setLoading(true)
-    const res = await apiFetch<PaymentsData>(`/api/employees/${employeeId}/payments?limit=200`)
-    if (res.success && res.data) {
-      setData(res.data)
-    }
-    setLoading(false)
-    setLoaded(true)
-  }, [employeeId])
-
-  useEffect(() => {
-    if (!loaded) fetchPayments()
-  }, [loaded, fetchPayments])
+  const { data = null, isLoading: loading } =
+    useSWR<PaymentsData>(`/api/employees/${employeeId}/payments?limit=200`)
 
   if (loading) {
     return (
@@ -584,59 +559,20 @@ export default function EmployeeDetailView({ employeeId }: { employeeId: string 
   const router = useRouter()
   const { toast } = useToast()
 
-  const [employee, setEmployee] = useState<EmployeeDetail | null>(null)
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
-
-  const [perf, setPerf] = useState<PerformanceData | null>(null)
-  const [perfLoading, setPerfLoading] = useState(true)
-
-  // Videos count for overview stats (loaded alongside main data)
-  const [activeVideos, setActiveVideos] = useState(0)
-  const [videosLoaded, setVideosLoaded] = useState(false)
-
   const [editOpen, setEditOpen] = useState(false)
   const [deactivateOpen, setDeactivateOpen] = useState(false)
   const [actioning, setActioning] = useState(false)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setPerfLoading(true)
+  const { data: employee = null, isLoading: loading } =
+    useSWR<EmployeeDetail>(`/api/employees/${employeeId}`)
+  const { data: perf = null, isLoading: perfLoading } =
+    useSWR<PerformanceData>(`/api/employees/${employeeId}/performance`)
+  const { data: videosData } =
+    useSWR<{ id: string; status: string }[]>(`/api/employees/${employeeId}/videos?limit=200`)
+  const activeVideos = videosData?.length ?? 0
 
-    const [empRes, perfRes] = await Promise.all([
-      apiFetch<EmployeeDetail>(`/api/employees/${employeeId}`),
-      apiFetch<PerformanceData>(`/api/employees/${employeeId}/performance`),
-    ])
-
-    if (!empRes.success || !empRes.data) {
-      setEmployee(null)
-      setLoading(false)
-      setPerfLoading(false)
-      return
-    }
-
-    setEmployee(empRes.data)
-    setLoading(false)
-
-    if (perfRes.success && perfRes.data) {
-      setPerf(perfRes.data)
-    }
-    setPerfLoading(false)
-  }, [employeeId])
-
-  const loadActiveVideosCount = useCallback(async () => {
-    if (videosLoaded) return
-    const res = await apiFetch<{ id: string; status: string }[]>(
-      `/api/employees/${employeeId}/videos?limit=200`,
-    )
-    if (res.success && res.data) {
-      setActiveVideos(res.data.length)
-    }
-    setVideosLoaded(true)
-  }, [employeeId, videosLoaded])
-
-  useEffect(() => { loadData() }, [loadData])
-  useEffect(() => { loadActiveVideosCount() }, [loadActiveVideosCount])
+  const refreshEmployee = () => invalidate('/api/employees', 'dashboard:')
 
   const handleToggleStatus = async () => {
     if (!employee) return
@@ -657,7 +593,7 @@ export default function EmployeeDetailView({ employeeId }: { employeeId: string 
     }
 
     toast({ variant: 'success', title: `${employee.user.name} ${isActive ? 'deactivated' : 'activated'}` })
-    loadData()
+    refreshEmployee()
   }
 
   const handleDeactivateClick = () => {
@@ -800,7 +736,7 @@ export default function EmployeeDetailView({ employeeId }: { employeeId: string 
         open={editOpen}
         onOpenChange={setEditOpen}
         employee={asListItem}
-        onSaved={() => { loadData(); setVideosLoaded(false) }}
+        onSaved={refreshEmployee}
       />
 
       <Dialog open={deactivateOpen} onOpenChange={setDeactivateOpen}>

@@ -11,8 +11,10 @@ import {
 } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { Loader2 } from 'lucide-react'
+import { SWRConfig } from 'swr'
 import { supabase } from '@/lib/supabase'
 import { setAccessToken } from '@/lib/auth-token'
+import { swrConfig } from '@/lib/swr'
 
 type Role = 'admin' | 'employee'
 type Status = 'active' | 'inactive'
@@ -150,9 +152,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, login, logout }}>
-      {children}
-    </AuthContext.Provider>
+    <SWRConfig value={swrConfig}>
+      <AuthContext.Provider value={{ user, session, loading, login, logout }}>
+        {children}
+      </AuthContext.Provider>
+    </SWRConfig>
   )
 }
 

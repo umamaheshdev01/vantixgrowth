@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import { Loader2, Video } from 'lucide-react'
 import VideoListAdminView from '@/components/videos/VideoListAdminView'
 import PageShell from '@/components/shared/PageShell'
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/table'
 import { useAuth } from '@/context/AuthContext'
 import { apiFetch } from '@/lib/api'
+import { invalidate, REFRESH } from '@/lib/swr'
 import { formatDate, getDaysUntil } from '@/lib/dateHelpers'
 import { statusLabels } from '@/lib/statusLabels'
 import { useToast } from '@/hooks/use-toast'
@@ -50,18 +52,11 @@ function DaysCell({ days }: { days: number }) {
 
 function EmployeeVideoView() {
   const { toast } = useToast()
-  const [videos, setVideos] = useState<MyVideo[]>([])
-  const [loading, setLoading] = useState(true)
   const [advancing, setAdvancing] = useState<string | null>(null)
 
-  const fetchVideos = useCallback(async () => {
-    setLoading(true)
-    const res = await apiFetch<MyVideo[]>('/api/videos/mine?limit=200')
-    setVideos(res.success && res.data ? res.data : [])
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchVideos() }, [fetchVideos])
+  const { data, isLoading: loading } =
+    useSWR<MyVideo[]>('/api/videos/mine?limit=200', { refreshInterval: REFRESH.VIDEOS })
+  const videos = data ?? []
 
   const handleAdvance = async (video: MyVideo) => {
     const transition = NEXT_STAGE[video.status]
@@ -80,7 +75,7 @@ function EmployeeVideoView() {
       variant: 'success',
       title: `Status updated to ${transition.label}`,
     })
-    fetchVideos()
+    invalidate('/api/videos', 'dashboard:')
   }
 
   return (

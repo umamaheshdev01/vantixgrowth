@@ -71,25 +71,10 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(dashboard)/finance/page.js"
     ],
-    "/(dashboard)/videos/[id]/page": [
+    "/(dashboard)/settings/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(dashboard)/videos/[id]/page.js"
-    ],
-    "/api/videos/[id]/history/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/history/route.js"
-    ],
-    "/api/videos/[id]/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/route.js"
-    ],
-    "/api/videos/[id]/activity/route": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/api/videos/[id]/activity/route.js"
+      "static/chunks/app/(dashboard)/settings/page.js"
     ]
   }
 }

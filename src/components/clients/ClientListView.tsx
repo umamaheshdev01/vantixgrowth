@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Archive, Briefcase, Eye, Pencil, Plus, Search } from 'lucide-react'
 import PageShell from '@/components/shared/PageShell'
@@ -30,6 +31,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { apiFetch } from '@/lib/api'
+import { invalidate } from '@/lib/swr'
 import { formatINR } from '@/lib/formatCurrency'
 import { formatDate } from '@/lib/dateHelpers'
 import { useToast } from '@/hooks/use-toast'
@@ -48,8 +50,6 @@ export default function ClientListView() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const [clients, setClients] = useState<ClientListItem[]>([])
-  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<string[]>([])
   const [nicheFilter, setNicheFilter] = useState<string[]>([])
@@ -61,19 +61,19 @@ export default function ClientListView() {
   const [archiveTarget, setArchiveTarget] = useState<ClientListItem | null>(null)
   const [archiving, setArchiving] = useState(false)
 
-  const fetchClients = useCallback(async () => {
-    setLoading(true)
+  // SWR key is the API path; changing a filter swaps the key and refetches
+  // automatically (replacing the old useEffect-on-filters wiring).
+  const clientsKey = useMemo(() => {
     const params = new URLSearchParams({ limit: '100', page: '1' })
     if (includeArchived) params.set('includeArchived', 'true')
     statusFilter.forEach(s => params.append('status[]', s))
     nicheFilter.forEach(n => params.append('niche[]', n))
-
-    const res = await apiFetch<ClientListItem[]>(`/api/clients?${params}`)
-    setClients(res.success && res.data ? res.data : [])
-    setLoading(false)
+    return `/api/clients?${params}`
   }, [includeArchived, statusFilter, nicheFilter])
 
-  useEffect(() => { fetchClients() }, [fetchClients])
+  const { data, isLoading } = useSWR<ClientListItem[]>(clientsKey)
+  const clients = data ?? []
+  const loading = isLoading
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -121,7 +121,7 @@ export default function ClientListView() {
 
     toast({ variant: 'success', title: 'Client archived', description: `${archiveTarget.name} has been archived.` })
     setArchiveTarget(null)
-    fetchClients()
+    invalidate('/api/clients', 'dashboard:')
   }
 
   return (
@@ -266,7 +266,7 @@ export default function ClientListView() {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         client={editingClient}
-        onSaved={fetchClients}
+        onSaved={() => invalidate('/api/clients', 'dashboard:')}
       />
 
       <Dialog open={Boolean(archiveTarget)} onOpenChange={open => !open && setArchiveTarget(null)}>

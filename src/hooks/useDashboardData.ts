@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { supabase } from '@/lib/supabase'
+import { REFRESH } from '@/lib/swr'
 
 export interface DashboardClient {
   id: string
@@ -77,92 +78,92 @@ const initialState: DashboardData = {
   error: null,
 }
 
+type DashboardPayload = Omit<DashboardData, 'loading' | 'error'>
+
+async function fetchDashboard(): Promise<DashboardPayload> {
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
+  const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0]
+  const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]
+
+  const [
+    clientsRes,
+    allClientsRes,
+    videosRes,
+    financeCurrentRes,
+    financeLastRes,
+    recentFinanceRes,
+    employeesRes,
+  ] = await Promise.all([
+    supabase
+      .from('clients')
+      .select('id, name, status, retainer_amount, logo_url, contract_end_date')
+      .in('status', ['active', 'on_hold', 'upcoming']),
+
+    supabase
+      .from('clients')
+      .select('id, name, retainer_amount, status, contract_start_date'),
+
+    supabase
+      .from('videos')
+      .select('id, title, client_id, status, due_date, assigned_editor_id, created_at'),
+
+    supabase
+      .from('finance_entries')
+      .select('id, date, type, amount')
+      .gte('date', monthStart)
+      .lte('date', monthEnd),
+
+    supabase
+      .from('finance_entries')
+      .select('id, date, type, amount')
+      .gte('date', lastMonthStart)
+      .lte('date', lastMonthEnd),
+
+    supabase
+      .from('finance_entries')
+      .select('id, date, type, category, amount, description, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5),
+
+    supabase
+      .from('employees')
+      .select('id, user_id, users(id, name)'),
+  ])
+
+  // Surface the first query error so SWR routes it to its `error` slot.
+  const firstError = [
+    clientsRes, allClientsRes, videosRes,
+    financeCurrentRes, financeLastRes, recentFinanceRes, employeesRes,
+  ].find((r) => r.error)?.error
+
+  if (firstError) throw new Error(firstError.message)
+
+  return {
+    clients: (clientsRes.data ?? []) as DashboardClient[],
+    allClients: (allClientsRes.data ?? []) as AllClient[],
+    allVideos: (videosRes.data ?? []) as DashboardVideo[],
+    financeThisMonth: (financeCurrentRes.data ?? []) as FinanceEntry[],
+    financeLastMonth: (financeLastRes.data ?? []) as FinanceEntry[],
+    recentFinance: (recentFinanceRes.data ?? []) as RecentFinanceEntry[],
+    employees: (employeesRes.data ?? []) as unknown as Employee[],
+  }
+}
+
 export function useDashboardData(): DashboardData {
-  const [data, setData] = useState<DashboardData>(initialState)
+  // Dashboard aggregates change as others edit, so it polls on a timer.
+  const { data, error, isLoading } = useSWR('dashboard:data', fetchDashboard, {
+    refreshInterval: REFRESH.DASHBOARD,
+  })
 
-  useEffect(() => {
-    let cancelled = false
+  if (!data) {
+    return { ...initialState, loading: isLoading, error: error ? error.message : null }
+  }
 
-    async function fetchAll() {
-      const now = new Date()
-      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0]
-      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0).toISOString().split('T')[0]
-      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0]
-      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0]
-
-      const [
-        clientsRes,
-        allClientsRes,
-        videosRes,
-        financeCurrentRes,
-        financeLastRes,
-        recentFinanceRes,
-        employeesRes,
-      ] = await Promise.all([
-        supabase
-          .from('clients')
-          .select('id, name, status, retainer_amount, logo_url, contract_end_date')
-          .in('status', ['active', 'on_hold', 'upcoming']),
-
-        supabase
-          .from('clients')
-          .select('id, name, retainer_amount, status, contract_start_date'),
-
-        supabase
-          .from('videos')
-          .select('id, title, client_id, status, due_date, assigned_editor_id, created_at'),
-
-        supabase
-          .from('finance_entries')
-          .select('id, date, type, amount')
-          .gte('date', monthStart)
-          .lte('date', monthEnd),
-
-        supabase
-          .from('finance_entries')
-          .select('id, date, type, amount')
-          .gte('date', lastMonthStart)
-          .lte('date', lastMonthEnd),
-
-        supabase
-          .from('finance_entries')
-          .select('id, date, type, category, amount, description, created_at')
-          .order('created_at', { ascending: false })
-          .limit(5),
-
-        supabase
-          .from('employees')
-          .select('id, user_id, users(id, name)'),
-      ])
-
-      if (cancelled) return
-
-      const firstError = [
-        clientsRes, allClientsRes, videosRes,
-        financeCurrentRes, financeLastRes, recentFinanceRes, employeesRes,
-      ].find((r) => r.error)?.error
-
-      if (firstError) {
-        setData((prev) => ({ ...prev, loading: false, error: firstError.message }))
-        return
-      }
-
-      setData({
-        clients: (clientsRes.data ?? []) as DashboardClient[],
-        allClients: (allClientsRes.data ?? []) as AllClient[],
-        allVideos: (videosRes.data ?? []) as DashboardVideo[],
-        financeThisMonth: (financeCurrentRes.data ?? []) as FinanceEntry[],
-        financeLastMonth: (financeLastRes.data ?? []) as FinanceEntry[],
-        recentFinance: (recentFinanceRes.data ?? []) as RecentFinanceEntry[],
-        employees: (employeesRes.data ?? []) as unknown as Employee[],
-        loading: false,
-        error: null,
-      })
-    }
-
-    fetchAll()
-    return () => { cancelled = true }
-  }, [])
-
-  return data
+  return {
+    ...data,
+    loading: false,
+    error: error ? error.message : null,
+  }
 }

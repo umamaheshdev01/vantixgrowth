@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Briefcase, Loader2 } from 'lucide-react'
 import DetailPageHeader from '@/components/shared/DetailPageHeader'
@@ -10,7 +11,7 @@ import ClientVideosTab from '@/components/clients/ClientVideosTab'
 import ClientFinanceTab from '@/components/clients/ClientFinanceTab'
 import ClientNotesActivityTab from '@/components/clients/ClientNotesActivityTab'
 import ClientFormDrawer from '@/components/clients/ClientFormDrawer'
-import { apiFetch } from '@/lib/api'
+import { invalidate } from '@/lib/swr'
 import type { ClientDetail, ClientFinanceResponse } from '@/types/client'
 
 const TABS = ['Overview', 'Videos', 'Finance', 'Notes & Activity']
@@ -21,31 +22,16 @@ interface ClientDetailViewProps {
 
 export default function ClientDetailView({ clientId }: ClientDetailViewProps) {
   const router = useRouter()
-  const [client, setClient] = useState<ClientDetail | null>(null)
-  const [totalRevenue, setTotalRevenue] = useState(0)
-  const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(0)
   const [editOpen, setEditOpen] = useState(false)
 
-  const loadClient = useCallback(async () => {
-    setLoading(true)
-    const [clientRes, financeRes] = await Promise.all([
-      apiFetch<ClientDetail>(`/api/clients/${clientId}`),
-      apiFetch<ClientFinanceResponse>(`/api/clients/${clientId}/finance?limit=1`),
-    ])
+  const { data: client = null, isLoading: clientLoading, mutate: mutateClient } =
+    useSWR<ClientDetail>(`/api/clients/${clientId}`)
+  const { data: finance, isLoading: financeLoading } =
+    useSWR<ClientFinanceResponse>(`/api/clients/${clientId}/finance?limit=1`)
 
-    if (!clientRes.success || !clientRes.data) {
-      setClient(null)
-      setLoading(false)
-      return
-    }
-
-    setClient(clientRes.data)
-    setTotalRevenue(financeRes.data?.total_received_lifetime ?? 0)
-    setLoading(false)
-  }, [clientId])
-
-  useEffect(() => { loadClient() }, [loadClient])
+  const totalRevenue = finance?.total_received_lifetime ?? 0
+  const loading = clientLoading || financeLoading
 
   if (loading) {
     return (
@@ -95,7 +81,9 @@ export default function ClientDetailView({ clientId }: ClientDetailViewProps) {
         <ClientNotesActivityTab
           clientId={client.id}
           initialNotes={client.notes}
-          onNotesSaved={notes => setClient(prev => prev ? { ...prev, notes } : prev)}
+          onNotesSaved={notes =>
+            mutateClient(prev => (prev ? { ...prev, notes } : prev), { revalidate: false })
+          }
         />
       )}
 
@@ -103,7 +91,7 @@ export default function ClientDetailView({ clientId }: ClientDetailViewProps) {
         open={editOpen}
         onOpenChange={setEditOpen}
         client={client}
-        onSaved={loadClient}
+        onSaved={() => invalidate('/api/clients', 'dashboard:')}
       />
     </div>
   )

@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { ChevronLeft, ChevronRight, IndianRupee, Printer } from 'lucide-react'
 import DetailPageHeader from '@/components/shared/DetailPageHeader'
 import { Button } from '@/components/ui/button'
@@ -159,15 +160,10 @@ export default function FinanceReportView() {
     selectedMonth.getFullYear() === currentMonth.getFullYear() &&
     selectedMonth.getMonth() === currentMonth.getMonth()
 
-  const [entries, setEntries] = useState<RawEntry[]>([])
-  const [prevEntries, setPrevEntries] = useState<RawEntry[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const fetchData = useCallback(async () => {
-    setLoading(true)
+  const monthKey = `${selectedMonth.getFullYear()}-${selectedMonth.getMonth()}`
+  const { data, isLoading: loading } = useSWR(`finance:report:${monthKey}`, async () => {
     const { start, end } = getMonthRange(selectedMonth)
     const prev = getPreviousMonthRange(selectedMonth)
-
     const [cur, pre] = await Promise.all([
       supabase
         .from('finance_entries')
@@ -180,13 +176,13 @@ export default function FinanceReportView() {
         .gte('date', prev.start)
         .lte('date', prev.end),
     ])
-
-    setEntries((cur.data as RawEntry[]) ?? [])
-    setPrevEntries((pre.data as RawEntry[]) ?? [])
-    setLoading(false)
-  }, [selectedMonth])
-
-  useEffect(() => { fetchData() }, [fetchData])
+    return {
+      entries: (cur.data as RawEntry[]) ?? [],
+      prevEntries: (pre.data as RawEntry[]) ?? [],
+    }
+  })
+  const entries = data?.entries ?? []
+  const prevEntries = data?.prevEntries ?? []
 
   const prevMonthLabel = useMemo(() => {
     const d = new Date(selectedMonth.getFullYear(), selectedMonth.getMonth() - 1, 1)

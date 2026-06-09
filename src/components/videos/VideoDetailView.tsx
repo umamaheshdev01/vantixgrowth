@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { CheckCircle2, Loader2, Video } from 'lucide-react'
 import DetailPageHeader from '@/components/shared/DetailPageHeader'
@@ -11,6 +12,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { apiFetch } from '@/lib/api'
+import { invalidate, REFRESH } from '@/lib/swr'
 import { formatDate, formatDateTime } from '@/lib/dateHelpers'
 import { statusLabels } from '@/lib/statusLabels'
 import { useToast } from '@/hooks/use-toast'
@@ -645,49 +647,29 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
   const { user } = useAuth()
   const { toast } = useToast()
 
-  const [video, setVideo] = useState<VideoListItem | null>(null)
-  const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [loading, setLoading] = useState(true)
   const [editOpen, setEditOpen] = useState(false)
-  const [clients, setClients] = useState<{ id: string; name: string; status: string }[]>([])
-  const [employees, setEmployees] = useState<{ id: string; user: { name: string } }[]>([])
 
   const isAdmin = user?.role === 'admin'
 
-  const loadVideo = useCallback(async () => {
-    const [videoRes, historyRes] = await Promise.all([
-      apiFetch<VideoListItem>(`/api/videos/${videoId}`),
-      apiFetch<HistoryEntry[]>(`/api/videos/${videoId}/history`),
-    ])
+  const { data: video = null, isLoading: loading } =
+    useSWR<VideoListItem>(`/api/videos/${videoId}`)
+  // Status history is an append-only audit feed → poll on a timer.
+  const { data: historyData } =
+    useSWR<HistoryEntry[]>(`/api/videos/${videoId}/history`, {
+      refreshInterval: REFRESH.ACTIVITY,
+    })
+  const history = historyData ?? []
 
-    if (!videoRes.success || !videoRes.data) {
-      setVideo(null)
-      setLoading(false)
-      return
-    }
+  // Dropdowns only needed for the admin edit drawer — conditional key.
+  const { data: clientsData } =
+    useSWR<{ id: string; name: string; status: string }[]>(isAdmin ? '/api/clients?limit=200' : null)
+  const clients = clientsData ?? []
+  const { data: employeesData } =
+    useSWR<{ id: string; user: { name: string } }[]>(isAdmin ? '/api/employees?limit=200' : null)
+  const employees = employeesData ?? []
 
-    setVideo(videoRes.data)
-    setHistory(historyRes.success && historyRes.data ? historyRes.data : [])
-    setLoading(false)
-  }, [videoId])
-
-  const loadDropdowns = useCallback(async () => {
-    const [clientsRes, empsRes] = await Promise.all([
-      apiFetch<{ id: string; name: string; status: string }[]>('/api/clients?limit=200'),
-      apiFetch<{ id: string; user: { name: string } }[]>('/api/employees?limit=200'),
-    ])
-    if (clientsRes.success && clientsRes.data) setClients(clientsRes.data)
-    if (empsRes.success && empsRes.data) setEmployees(empsRes.data)
-  }, [])
-
-  useEffect(() => {
-    setLoading(true)
-    loadVideo()
-  }, [loadVideo])
-
-  useEffect(() => {
-    if (isAdmin) loadDropdowns()
-  }, [isAdmin, loadDropdowns])
+  // Any status change here also shifts client/dashboard aggregates.
+  const refreshAll = () => invalidate('/api/videos', '/api/clients', 'dashboard:')
 
   if (loading) {
     return (
@@ -725,7 +707,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
   const isCancelled = video.status === 'cancelled'
 
   const handleRefresh = () => {
-    loadVideo()
+    refreshAll()
   }
 
   return (
@@ -834,7 +816,7 @@ export default function VideoDetailView({ videoId }: { videoId: string }) {
           employees={employees}
           currentUserId={user?.id ?? ''}
           onSaved={() => {
-            loadVideo()
+            refreshAll()
             setEditOpen(false)
           }}
         />

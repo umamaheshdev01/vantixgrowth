@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import Link from 'next/link'
 import { Plus, Video } from 'lucide-react'
 import EmptyState from '@/components/shared/EmptyState'
@@ -16,7 +16,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { apiFetch } from '@/lib/api'
 import { formatDate, getDaysUntil } from '@/lib/dateHelpers'
 import type { ClientVideo } from '@/types/client'
 
@@ -43,18 +42,9 @@ interface ClientVideosTabProps {
 }
 
 export default function ClientVideosTab({ clientId, clientName }: ClientVideosTabProps) {
-  const [videos, setVideos] = useState<ClientVideo[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      const res = await apiFetch<ClientVideo[]>(`/api/clients/${clientId}/videos?limit=100`)
-      setVideos(res.success && res.data ? res.data : [])
-      setLoading(false)
-    }
-    load()
-  }, [clientId])
+  const { data, isLoading: loading } =
+    useSWR<ClientVideo[]>(`/api/clients/${clientId}/videos?limit=100`)
+  const videos = data ?? []
 
   return (
     <div className="space-y-4">

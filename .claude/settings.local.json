@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npm install *)",
       "WebFetch(domain:neon.com)",
-      "mcp__supabase__execute_sql"
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__get_logs"
     ]
-  }
+  },
+  "enabledMcpjsonServers": [
+    "supabase"
+  ]
 }

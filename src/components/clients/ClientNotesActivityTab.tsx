@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import useSWR from 'swr'
 import { Activity, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Textarea } from '@/components/ui/textarea'
 import { Skeleton } from '@/components/ui/skeleton'
 import { apiFetch } from '@/lib/api'
+import { REFRESH } from '@/lib/swr'
 import { formatDateTime } from '@/lib/dateHelpers'
 import { useToast } from '@/hooks/use-toast'
 import type { ActivityLogEntry } from '@/types/client'
@@ -24,24 +26,19 @@ export default function ClientNotesActivityTab({
   const { toast } = useToast()
   const [notes, setNotes] = useState(initialNotes ?? '')
   const [saving, setSaving] = useState(false)
-  const [logs, setLogs] = useState<ActivityLogEntry[]>([])
-  const [loadingLogs, setLoadingLogs] = useState(true)
   const savedNotesRef = useRef(initialNotes ?? '')
+
+  // Activity feed polls on a timer so entries from other team members appear live.
+  const { data: logsData, isLoading: loadingLogs, mutate: refetchLogs } =
+    useSWR<ActivityLogEntry[]>(`/api/clients/${clientId}/activity?limit=50`, {
+      refreshInterval: REFRESH.ACTIVITY,
+    })
+  const logs = logsData ?? []
 
   useEffect(() => {
     setNotes(initialNotes ?? '')
     savedNotesRef.current = initialNotes ?? ''
   }, [initialNotes])
-
-  useEffect(() => {
-    async function load() {
-      setLoadingLogs(true)
-      const res = await apiFetch<ActivityLogEntry[]>(`/api/clients/${clientId}/activity?limit=50`)
-      setLogs(res.success && res.data ? res.data : [])
-      setLoadingLogs(false)
-    }
-    load()
-  }, [clientId])
 
   const saveNotes = async () => {
     if (notes === savedNotesRef.current) return
@@ -64,6 +61,7 @@ export default function ClientNotesActivityTab({
 
     savedNotesRef.current = notes
     onNotesSaved(notes)
+    refetchLogs()
   }
 
   return (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import useSWR from 'swr'
 import { IndianRupee } from 'lucide-react'
 import EmptyState from '@/components/shared/EmptyState'
 import { Card, CardContent } from '@/components/ui/card'
@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { apiFetch } from '@/lib/api'
 import { formatINR } from '@/lib/formatCurrency'
 import { formatDate } from '@/lib/dateHelpers'
 import { FINANCE_CATEGORY_LABELS, PAYMENT_METHOD_LABELS } from '@/constants/clients'
@@ -24,19 +23,8 @@ interface ClientFinanceTabProps {
 }
 
 export default function ClientFinanceTab({ clientId }: ClientFinanceTabProps) {
-  const [data, setData] = useState<ClientFinanceResponse | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    async function load() {
-      setLoading(true)
-      const res = await apiFetch<ClientFinanceResponse>(`/api/clients/${clientId}/finance?limit=100`)
-      if (res.success && res.data) setData(res.data)
-      else setData(null)
-      setLoading(false)
-    }
-    load()
-  }, [clientId])
+  const { data = null, isLoading: loading } =
+    useSWR<ClientFinanceResponse>(`/api/clients/${clientId}/finance?limit=100`)
 
   if (loading) {
     return (

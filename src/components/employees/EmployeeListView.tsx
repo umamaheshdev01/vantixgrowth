@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import { Eye, Loader2, Pencil, Plus, Search, Users } from 'lucide-react'
 import PageShell from '@/components/shared/PageShell'
@@ -27,6 +28,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { apiFetch } from '@/lib/api'
+import { invalidate } from '@/lib/swr'
 import { formatINR } from '@/lib/formatCurrency'
 import { useToast } from '@/hooks/use-toast'
 
@@ -90,8 +92,8 @@ export default function EmployeeListView() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const [employees, setEmployees] = useState<EmployeeListItem[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading: loading } = useSWR<EmployeeListItem[]>('/api/employees?limit=200')
+  const employees = data ?? []
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
@@ -101,15 +103,6 @@ export default function EmployeeListView() {
 
   const [deactivateTarget, setDeactivateTarget] = useState<EmployeeListItem | null>(null)
   const [actioning, setActioning] = useState(false)
-
-  const fetchEmployees = useCallback(async () => {
-    setLoading(true)
-    const res = await apiFetch<EmployeeListItem[]>('/api/employees?limit=200')
-    setEmployees(res.success && res.data ? res.data : [])
-    setLoading(false)
-  }, [])
-
-  useEffect(() => { fetchEmployees() }, [fetchEmployees])
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -153,7 +146,7 @@ export default function EmployeeListView() {
       return
     }
     toast({ variant: 'success', title: `${emp.user.name} deactivated` })
-    fetchEmployees()
+    invalidate('/api/employees', 'dashboard:')
   }
 
   const handleActivate = async (emp: EmployeeListItem, e: React.MouseEvent) => {
@@ -167,7 +160,7 @@ export default function EmployeeListView() {
       return
     }
     toast({ variant: 'success', title: `${emp.user.name} activated` })
-    fetchEmployees()
+    invalidate('/api/employees', 'dashboard:')
   }
 
   return (
@@ -356,7 +349,7 @@ export default function EmployeeListView() {
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         employee={editingEmployee}
-        onSaved={fetchEmployees}
+        onSaved={() => invalidate('/api/employees', 'dashboard:')}
       />
 
       {/* Deactivate confirmation */}

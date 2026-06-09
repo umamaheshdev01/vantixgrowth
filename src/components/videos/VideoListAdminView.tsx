@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
+import useSWR from 'swr'
 import { useRouter } from 'next/navigation'
 import {
   ArrowDown,
@@ -39,6 +40,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { apiFetch } from '@/lib/api'
+import { invalidate, REFRESH } from '@/lib/swr'
 import { formatDate } from '@/lib/dateHelpers'
 import { statusLabels } from '@/lib/statusLabels'
 import { useToast } from '@/hooks/use-toast'
@@ -104,10 +106,6 @@ export default function VideoListAdminView({ initialStatus, initialClient }: Pro
   const { toast } = useToast()
 
   // Data
-  const [videos, setVideos] = useState<VideoListItem[]>([])
-  const [clients, setClients] = useState<DropdownClient[]>([])
-  const [employees, setEmployees] = useState<DropdownEmployee[]>([])
-  const [loading, setLoading] = useState(true)
 
   // Filters
   const [search, setSearch] = useState('')
@@ -130,8 +128,8 @@ export default function VideoListAdminView({ initialStatus, initialClient }: Pro
 
   // ─── Fetch ─────────────────────────────────────────────────────────────────
 
-  const fetchVideos = useCallback(async () => {
-    setLoading(true)
+  // Video list polls on a timer — statuses change frequently across the team.
+  const videosKey = useMemo(() => {
     const params = new URLSearchParams({ limit: '300' })
     params.set('showDelivered', showDelivered ? 'true' : 'false')
     params.set('showCancelled', showCancelled ? 'true' : 'false')
@@ -139,23 +137,17 @@ export default function VideoListAdminView({ initialStatus, initialClient }: Pro
     if (clientFilter) params.set('client[]', clientFilter)
     if (typeFilter) params.set('video_type[]', typeFilter)
     if (editorFilter) params.set('assigned_editor', editorFilter)
-
-    const res = await apiFetch<VideoListItem[]>(`/api/videos?${params}`)
-    setVideos(res.success && res.data ? res.data : [])
-    setLoading(false)
+    return `/api/videos?${params}`
   }, [showDelivered, showCancelled, statusFilter, clientFilter, typeFilter, editorFilter])
 
-  const fetchDropdowns = useCallback(async () => {
-    const [clientsRes, empsRes] = await Promise.all([
-      apiFetch<DropdownClient[]>('/api/clients?limit=200'),
-      apiFetch<DropdownEmployee[]>('/api/employees?limit=200'),
-    ])
-    if (clientsRes.success && clientsRes.data) setClients(clientsRes.data)
-    if (empsRes.success && empsRes.data) setEmployees(empsRes.data)
-  }, [])
+  const { data: videosData, isLoading: loading } =
+    useSWR<VideoListItem[]>(videosKey, { refreshInterval: REFRESH.VIDEOS })
+  const videos = videosData ?? []
 
-  useEffect(() => { fetchDropdowns() }, [fetchDropdowns])
-  useEffect(() => { fetchVideos() }, [fetchVideos])
+  const { data: clientsData } = useSWR<DropdownClient[]>('/api/clients?limit=200')
+  const clients = clientsData ?? []
+  const { data: employeesData } = useSWR<DropdownEmployee[]>('/api/employees?limit=200')
+  const employees = employeesData ?? []
 
   // ─── Sort + search (client-side) ──────────────────────────────────────────
 
@@ -214,7 +206,7 @@ export default function VideoListAdminView({ initialStatus, initialClient }: Pro
     }
     toast({ variant: 'success', title: 'Video deleted' })
     setDeleteTarget(null)
-    fetchVideos()
+    invalidate('/api/videos', '/api/clients', 'dashboard:')
   }
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -565,7 +557,7 @@ export default function VideoListAdminView({ initialStatus, initialClient }: Pro
         clients={clients}
         employees={employees}
         currentUserId={user?.id ?? ''}
-        onSaved={fetchVideos}
+        onSaved={() => invalidate('/api/videos', '/api/clients', 'dashboard:')}
       />
 
       <Dialog
